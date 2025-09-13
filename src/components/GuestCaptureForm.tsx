@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, MapPin, Phone, User, MessageSquare } from 'lucide-react';
+import { Save, MapPin, Phone, User as UserIcon, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -7,7 +7,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { User } from '../App';
 
 interface GuestCaptureFormProps {
@@ -108,7 +108,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center space-x-2">
-                            <User className="w-5 h-5" />
+                            <UserIcon className="w-5 h-5" />
                             <span>Capture New Guest</span>
                         </CardTitle>
                         {isOffline && (
@@ -124,7 +124,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                         {/* Name Field */}
                         <div className="space-y-2">
                             <Label htmlFor="name" className="flex items-center space-x-1">
-                                <User className="w-4 h-4" />
+                                <UserIcon className="w-4 h-4" />
                                 <span>Name *</span>
                             </Label>
                             <Input

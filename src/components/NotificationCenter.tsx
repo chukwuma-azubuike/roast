@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Bell, Clock, Phone, User, MapPin, CheckCircle, X, AlertTriangle, Info, MessageSquare } from 'lucide-react';
+import { Bell, Clock, Phone, User as UserIcon, CheckCircle, X, AlertTriangle, Info, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { User } from '../App';
 
 interface NotificationCenterProps {
@@ -153,7 +153,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
             case 'reminder':
                 return <Clock className="w-5 h-5" />;
             case 'assignment':
-                return <User className="w-5 h-5" />;
+                return <UserIcon className="w-5 h-5" />;
             default:
                 return <Info className="w-5 h-5" />;
         }
@@ -213,7 +213,9 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
 
         return (
             <Card
-                className={`${!notification.isRead ? 'border-l-4 border-l-blue-500 bg-blue-50' : ''} hover:shadow-md transition-shadow`}
+                className={`${
+                    !notification.isRead ? 'border-l-4 border-l-blue-500 bg-blue-50' : ''
+                } hover:shadow-md transition-shadow`}
             >
                 <CardContent className="p-4">
                     <div className="flex items-start space-x-3">

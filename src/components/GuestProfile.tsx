@@ -6,12 +6,9 @@ import {
     MapPin,
     Calendar,
     CheckCircle,
-    Circle,
     Plus,
     Clock,
-    User,
     MessageSquare,
-    Edit3,
     Save,
     X,
 } from 'lucide-react';
@@ -22,7 +19,7 @@ import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Progress } from './ui/progress';
 import { Checkbox } from './ui/checkbox';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import type { Guest } from '../App';
 
 interface GuestProfileProps {

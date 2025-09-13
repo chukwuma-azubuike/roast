@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, TrendingDown, Users, Award, Calendar, Filter } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Users, Award, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import {
@@ -241,8 +240,8 @@ export function GlobalDashboard() {
                                                         {performer.trend === 'up'
                                                             ? 'Rising'
                                                             : performer.trend === 'down'
-                                                              ? 'Declining'
-                                                              : 'Stable'}
+                                                            ? 'Declining'
+                                                            : 'Stable'}
                                                     </span>
                                                 </div>
                                             </div>

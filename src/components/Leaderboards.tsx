@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Medal, Award, Star, TrendingUp, Calendar, Users, Target } from 'lucide-react';
+import { Trophy, Medal, Award, Star, TrendingUp, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -286,8 +286,8 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
                                         {currentUserPosition === 1
                                             ? "You're in the lead!"
                                             : currentUserPosition <= 3
-                                              ? "You're in the top 3!"
-                                              : `Position ${currentUserPosition} of ${workerLeaderboard.length}`}
+                                            ? "You're in the top 3!"
+                                            : `Position ${currentUserPosition} of ${workerLeaderboard.length}`}
                                     </p>
                                 </div>
                             </div>
