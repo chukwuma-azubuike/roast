@@ -94,13 +94,13 @@ export default function App() {
                 id: 'capture',
                 label: 'New Guest',
                 icon: Plus,
-                roles: ['worker'],
+                roles: ['worker', 'coordinator', 'admin', 'pastor'],
             },
             {
                 id: 'myGuests',
                 label: 'My Guests',
                 icon: Users,
-                roles: ['worker'],
+                roles: ['worker', 'coordinator', 'admin', 'pastor'],
             },
             {
                 id: 'zone',

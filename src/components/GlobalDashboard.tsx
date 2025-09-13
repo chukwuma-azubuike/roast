@@ -308,7 +308,7 @@ export function GlobalDashboard() {
                 </TabsContent>
 
                 <TabsContent value="analytics">
-                    <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Drop-off Analysis */}
                         <Card>
                             <CardHeader>

@@ -329,15 +329,24 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
                             className={worker.id === currentUser.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
                         >
                             <CardContent className="p-4">
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-3">
-                                        {getRankIcon(index + 1)}
-                                        <Avatar className="w-12 h-12">
-                                            <AvatarFallback>{worker.avatar}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <h3 className="font-semibold">{worker.name}</h3>
-                                            <p className="text-sm text-gray-600">{worker.zone} Zone</p>
+                                <div className="flex items-start sm:items-center space-x-4">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center space-x-3">
+                                            {getRankIcon(index + 1)}
+                                            <Avatar className="w-12 h-12">
+                                                <AvatarFallback>{worker.avatar}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <h3 className="font-semibold">{worker.name}</h3>
+                                                <p className="text-sm text-gray-600">{worker.zone} Zone</p>
+                                            </div>
+                                        </div>
+                                        <div className="sm:hidden">
+                                            <div className="flex items-center space-x-2 mb-1">
+                                                <span className="font-bold">{worker.points}</span>
+                                                {getTrendIcon(worker.trend)}
+                                            </div>
+                                            <div className="text-xs text-start text-gray-500">points</div>
                                         </div>
                                     </div>
 
@@ -362,7 +371,7 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
                                         </div>
                                     </div>
 
-                                    <div className="text-right">
+                                    <div className="text-right hidden sm:block">
                                         <div className="flex items-center space-x-2 mb-1">
                                             <span className="font-bold">{worker.points}</span>
                                             {getTrendIcon(worker.trend)}

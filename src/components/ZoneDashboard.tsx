@@ -616,70 +616,15 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
     };
 
     return (
-        <div className="p-4">
+        <div className="p-4 space-y-4">
             {/* Header */}
-            <div className="mb-6">
+            <div>
                 <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-bold">Zone Dashboard</h1>
-                    <div className="flex items-center space-x-2">
-                        {/* View Toggle */}
-                        <ToggleGroup
-                            type="single"
-                            value={viewMode}
-                            onValueChange={value => {
-                                if (value) {
-                                    setViewMode(value as 'kanban' | 'list');
-                                    // Reset filters when switching views
-                                    setSearchTerm('');
-                                    setStageFilter('all');
-                                    setBulkReassignMode(false);
-                                    setSelectedGuests([]);
-                                }
-                            }}
-                        >
-                            <ToggleGroupItem value="kanban" aria-label="Kanban view">
-                                <LayoutGrid className="w-4 h-4" />
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="list" aria-label="List view">
-                                <List className="w-4 h-4" />
-                            </ToggleGroupItem>
-                        </ToggleGroup>
+                    <h1 className="text-2xl font-bold">{zones.find(z => z.id === selectedZone)?.name} Dashboard</h1>
 
-                        {/* Bulk Actions */}
-                        {!bulkReassignMode ? (
-                            <Button variant="outline" onClick={() => setBulkReassignMode(true)}>
-                                <UserCheck className="w-4 h-4 mr-2" />
-                                Bulk Reassign
-                            </Button>
-                        ) : (
-                            <div className="flex items-center space-x-2">
-                                <span className="text-sm text-gray-600">{selectedGuests.length} selected</span>
-                                <Select onValueChange={handleBulkReassign}>
-                                    <SelectTrigger className="w-40">
-                                        <SelectValue placeholder="Assign to..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {mockWorkers.map(worker => (
-                                            <SelectItem key={worker.id} value={worker.id}>
-                                                {worker.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setBulkReassignMode(false);
-                                        setSelectedGuests([]);
-                                    }}
-                                >
-                                    <X className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        )}
-
-                        {/* Zone Selector */}
-                        {currentUser.role === 'admin' || currentUser.role === 'pastor' ? (
+                    {/* Zone Selector */}
+                    {currentUser.role === 'admin' ||
+                        (currentUser.role === 'pastor' && (
                             <Select value={selectedZone} onValueChange={setSelectedZone}>
                                 <SelectTrigger className="w-48">
                                     <SelectValue />
@@ -692,12 +637,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                                     ))}
                                 </SelectContent>
                             </Select>
-                        ) : (
-                            <Badge variant="outline" className="text-lg px-3 py-1">
-                                {zones.find(z => z.id === selectedZone)?.name}
-                            </Badge>
-                        )}
-                    </div>
+                        ))}
                 </div>
 
                 {/* Zone Stats */}
@@ -731,7 +671,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
 
             {/* Instructions - Only show for Kanban view */}
             {viewMode === 'kanban' && (
-                <Card className="mb-6">
+                <Card>
                     <CardContent className="p-4">
                         <h3 className="font-medium mb-2">Pipeline Management</h3>
                         <p className="text-sm text-gray-600 mb-2">
@@ -761,6 +701,65 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                     </CardContent>
                 </Card>
             )}
+
+            <div className="flex items-center space-x-2 w-full justify-between">
+                {/* View Toggle */}
+
+                {/* Bulk Actions */}
+                {!bulkReassignMode ? (
+                    <Button variant="outline" onClick={() => setBulkReassignMode(true)}>
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        Bulk Reassign
+                    </Button>
+                ) : (
+                    <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600">{selectedGuests.length} selected</span>
+                        <Select onValueChange={handleBulkReassign}>
+                            <SelectTrigger className="w-40">
+                                <SelectValue placeholder="Assign to..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {mockWorkers.map(worker => (
+                                    <SelectItem key={worker.id} value={worker.id}>
+                                        {worker.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setBulkReassignMode(false);
+                                setSelectedGuests([]);
+                            }}
+                        >
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </div>
+                )}
+
+                <ToggleGroup
+                    type="single"
+                    value={viewMode}
+                    onValueChange={value => {
+                        if (value) {
+                            setViewMode(value as 'kanban' | 'list');
+                            // Reset filters when switching views
+                            setSearchTerm('');
+                            setStageFilter('all');
+                            setBulkReassignMode(false);
+                            setSelectedGuests([]);
+                        }
+                    }}
+                >
+                    <ToggleGroupItem value="kanban" aria-label="Kanban view">
+                        <LayoutGrid className="w-4 h-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="list" aria-label="List view">
+                        <List className="w-4 h-4" />
+                    </ToggleGroupItem>
+                </ToggleGroup>
+            </div>
 
             {/* View Content */}
             {viewMode === 'kanban' ? (
