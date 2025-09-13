@@ -1,11 +1,20 @@
-// src/features/crm/api/crmApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { Guest, User, Engagement, Milestone, ContactChannel } from './types';
+import {
+    Guest,
+    User,
+    Engagement,
+    MilestoneStatus,
+    ContactChannel,
+    Zone,
+    AssimilationStage,
+    GuestFormData,
+} from './types';
 import { v4 as uuid } from 'uuid';
 
-// small helper to now ISO
+// Helper to get current ISO timestamp
 const now = () => new Date().toISOString();
 
+// Mock Data Generator
 const generateMockGuest = (overrides: Partial<Guest> = {}): Guest => ({
     id: uuid(),
     firstName: 'John',
@@ -15,29 +24,56 @@ const generateMockGuest = (overrides: Partial<Guest> = {}): Guest => ({
     assignedToId: 'user-worker-1',
     createdById: 'user-worker-1',
     createdAt: now(),
+    lastContact: now(),
     preferredChannel: ContactChannel.WHATSAPP,
     prayerRequest: 'Pray for new job',
     address: 'Lagos',
-    assimilationStage: 'INVITED',
+    nextAction: 'Follow up via call',
+    assimilationStage: AssimilationStage.INVITED,
     milestones: [
         {
             id: uuid(),
-            title: 'Attended First Service',
+            title: 'Initial Contact',
+            description: 'First contact with guest',
             weekNumber: 1,
-            status: 'PENDING',
-        } as Milestone,
+            status: MilestoneStatus.PENDING,
+            completedAt: null,
+        },
+        {
+            id: uuid(),
+            title: 'First Service',
+            description: 'Attended first service',
+            weekNumber: 2,
+            status: MilestoneStatus.PENDING,
+            completedAt: null,
+        },
     ],
     meta: {},
     ...overrides,
 });
 
+// Initial Mock Data
 const mockGuests: Guest[] = [
-    generateMockGuest({ firstName: 'Ada', assignedToId: 'user-worker-1', assimilationStage: 'INVITED' }),
-    generateMockGuest({ firstName: 'Chidi', assignedToId: 'user-worker-2', assimilationStage: 'ATTENDED' }),
-    generateMockGuest({ firstName: 'Ngozi', assignedToId: null, assimilationStage: 'NEW_LEAD' }),
+    generateMockGuest({
+        firstName: 'Ada',
+        assignedToId: 'user-worker-1',
+        assimilationStage: AssimilationStage.INVITED,
+        lastContact: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    }),
+    generateMockGuest({
+        firstName: 'Chidi',
+        assignedToId: 'user-worker-2',
+        assimilationStage: AssimilationStage.ATTENDED,
+        lastContact: now(),
+    }),
+    generateMockGuest({
+        firstName: 'Ngozi',
+        assignedToId: null,
+        assimilationStage: AssimilationStage.DISCIPLED,
+    }),
 ];
 
-const mockZones = [
+const mockZones: Zone[] = [
     { id: 'zone-1', name: 'Surulere' },
     { id: 'zone-2', name: 'Ikeja' },
 ];
@@ -48,81 +84,169 @@ const mockUsers: User[] = [
     { id: 'user-coord-1', name: 'Coordinator', role: 'ZONAL_COORDINATOR' as any, zoneIds: ['zone-1'] },
 ];
 
+const mockEngagements: Record<string, Engagement[]> = {};
+
 export const crmApi = createApi({
     reducerPath: 'crmApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: '/api', // keep, but in dev we'll mock responses via transformResponse
+        baseUrl: '/api',
+        prepareHeaders: headers => {
+            // Add auth headers here in production
+            return headers;
+        },
     }),
-    tagTypes: ['Guests', 'Zones', 'Engagements', 'Users'],
+    tagTypes: ['Guest', 'GuestList', 'Zone', 'User', 'Engagement'],
     endpoints: builder => ({
-        getGuests: builder.query<Guest[], void>({
-            query: () => ({ url: '/guests', method: 'GET' }),
+        // Guest Queries
+        getGuests: builder.query<Guest[], { workerId?: string; zoneId?: string }>({
+            query: params => ({
+                url: '/guests',
+                method: 'GET',
+                params,
+            }),
             transformResponse() {
-                // return mock data here; production: map server response -> Guest[]
                 return mockGuests;
             },
-            providesTags: ['Guests'],
+            providesTags: result =>
+                result
+                    ? [...result.map(({ id }) => ({ type: 'Guest' as const, id })), { type: 'GuestList', id: 'LIST' }]
+                    : [{ type: 'GuestList', id: 'LIST' }],
         }),
+
         getGuestById: builder.query<Guest, string>({
-            query: id => ({ url: `/guests/${id}`, method: 'GET' }),
+            query: id => `/guests/${id}`,
             transformResponse(_res: any, _meta, arg) {
-                // lookup the mock by id
                 return mockGuests.find(g => g.id === arg) ?? mockGuests[0];
             },
-            providesTags: result => (result ? [{ type: 'Guests', id: result.id }] : ['Guests']),
+            providesTags: (_result, _err, id) => [{ type: 'Guest', id }],
         }),
-        createGuest: builder.mutation<Guest, Partial<Guest>>({
-            query: guest => ({ url: '/guests', method: 'POST', body: guest }),
+
+        createGuest: builder.mutation<Guest, GuestFormData>({
+            query: guest => ({
+                url: '/guests',
+                method: 'POST',
+                body: guest,
+            }),
             transformResponse(_res: any, _meta, arg) {
-                // emulate server created object
-                const newGuest = generateMockGuest({ ...arg, createdAt: now() });
-                mockGuests.unshift(newGuest); // in-memory mutation for dev mock
+                const newGuest = generateMockGuest({
+                    ...arg,
+                    createdAt: now(),
+                    lastContact: now(),
+                    milestones:
+                        arg.milestones?.map(m => ({
+                            id: uuid(),
+                            title: m.title || '',
+                            description: m.description,
+                            weekNumber: m.weekNumber,
+                            status: m.status || MilestoneStatus.PENDING,
+                            completedAt: m.completedAt,
+                        })) || [],
+                });
+                mockGuests.unshift(newGuest);
                 return newGuest;
             },
-            invalidatesTags: ['Guests'],
+            invalidatesTags: [{ type: 'GuestList', id: 'LIST' }],
         }),
+
         updateGuest: builder.mutation<Guest, Partial<Guest> & { id: string }>({
-            query: ({ id, ...patch }) => ({ url: `/guests/${id}`, method: 'PATCH', body: patch }),
+            query: ({ id, ...patch }) => ({
+                url: `/guests/${id}`,
+                method: 'PATCH',
+                body: patch,
+            }),
             transformResponse(_res: any, _meta, arg) {
                 const idx = mockGuests.findIndex(g => g.id === arg.id);
                 if (idx >= 0) {
-                    mockGuests[idx] = { ...mockGuests[idx], ...(arg as any) };
-                    return mockGuests[idx];
+                    const updated = { ...mockGuests[idx], ...arg };
+                    mockGuests[idx] = updated;
+                    return updated;
                 }
-                return generateMockGuest();
+                throw new Error('Guest not found');
             },
-            invalidatesTags: result => (result ? [{ type: 'Guests', id: result.id }] : ['Guests']),
+            invalidatesTags: (_result, _error, { id }) => [
+                { type: 'Guest', id },
+                { type: 'GuestList', id: 'LIST' },
+            ],
         }),
-        getZones: builder.query<any[], void>({
-            query: () => ({ url: '/zones', method: 'GET' }),
+
+        // Zone Queries
+        getZones: builder.query<Zone[], void>({
+            query: () => '/zones',
             transformResponse() {
                 return mockZones;
             },
-            providesTags: ['Zones'],
+            providesTags: result =>
+                result ? [...result.map(({ id }) => ({ type: 'Zone' as const, id }))] : [{ type: 'Zone', id: 'LIST' }],
         }),
-        getUsers: builder.query<User[], void>({
-            query: () => ({ url: '/users', method: 'GET' }),
+
+        // User Queries
+        getUsers: builder.query<User[], { role?: string; zoneId?: string }>({
+            query: params => ({
+                url: '/users',
+                method: 'GET',
+                params,
+            }),
             transformResponse() {
                 return mockUsers;
             },
-            providesTags: ['Users'],
+            providesTags: result =>
+                result ? [...result.map(({ id }) => ({ type: 'User' as const, id }))] : [{ type: 'User', id: 'LIST' }],
         }),
+
+        // Engagement Queries
         getEngagementsForGuest: builder.query<Engagement[], string>({
-            query: guestId => ({ url: `/guests/${guestId}/engagements`, method: 'GET' }),
+            query: guestId => `/guests/${guestId}/engagements`,
             transformResponse(_res: any, _meta, guestId) {
-                // just return simple mock engagements
-                return [
-                    {
-                        id: uuid(),
-                        guestId,
-                        workerId: 'user-worker-1',
-                        type: 'WHATSAPP',
-                        notes: 'Shared invite',
-                        timestamp: now(),
-                    },
-                ] as Engagement[];
+                if (!mockEngagements[guestId]) {
+                    mockEngagements[guestId] = [
+                        {
+                            id: uuid(),
+                            guestId,
+                            workerId: 'user-worker-1',
+                            type: ContactChannel.WHATSAPP,
+                            notes: 'Initial contact made',
+                            timestamp: now(),
+                        },
+                    ];
+                }
+                return mockEngagements[guestId];
             },
-            providesTags: ['Engagements'],
+            providesTags: (_result, _error, guestId) => [{ type: 'Engagement', id: guestId }],
+        }),
+
+        addEngagement: builder.mutation<Engagement, Omit<Engagement, 'id' | 'timestamp'>>({
+            query: engagement => ({
+                url: `/guests/${engagement.guestId}/engagements`,
+                method: 'POST',
+                body: engagement,
+            }),
+            transformResponse(_res: any, _meta, arg) {
+                const newEngagement: Engagement = {
+                    ...arg,
+                    id: uuid(),
+                    timestamp: now(),
+                };
+
+                if (!mockEngagements[arg.guestId]) {
+                    mockEngagements[arg.guestId] = [];
+                }
+                mockEngagements[arg.guestId].unshift(newEngagement);
+
+                // Update guest's last contact
+                const guestIndex = mockGuests.findIndex(g => g.id === arg.guestId);
+                if (guestIndex >= 0) {
+                    mockGuests[guestIndex] = {
+                        ...mockGuests[guestIndex],
+                        lastContact: now(),
+                    };
+                }
+
+                return newEngagement;
+            },
+            invalidatesTags: (_result, _error, { guestId }) => [
+                { type: 'Engagement', id: guestId },
+                { type: 'Guest', id: guestId },
+            ],
         }),
     }),
 });
@@ -135,4 +259,5 @@ export const {
     useGetZonesQuery,
     useGetUsersQuery,
     useGetEngagementsForGuestQuery,
+    useAddEngagementMutation,
 } = crmApi;

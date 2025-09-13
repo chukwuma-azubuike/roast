@@ -7,6 +7,13 @@ export enum Role {
 
 export type ID = string;
 
+export enum AssimilationStage {
+    INVITED = 'invited',
+    ATTENDED = 'attended',
+    DISCIPLED = 'discipled',
+    JOINED = 'joined',
+}
+
 export interface User {
     id: ID;
     name: string;
@@ -22,6 +29,8 @@ export enum ContactChannel {
     WHATSAPP = 'WHATSAPP',
     SMS = 'SMS',
     EMAIL = 'EMAIL',
+    VISIT = 'VISIT',
+    MEETING = 'MEETING',
 }
 
 export enum MilestoneStatus {
@@ -43,9 +52,14 @@ export interface Engagement {
     id: ID;
     guestId: ID;
     workerId: ID;
-    type: ContactChannel | 'VISIT' | 'MEETING';
+    type: ContactChannel;
     notes?: string;
     timestamp: string;
+}
+
+export interface Zone {
+    id: ID;
+    name: string;
 }
 
 export interface Guest {
@@ -57,10 +71,16 @@ export interface Guest {
     assignedToId?: ID | null;
     createdById?: ID;
     createdAt: string;
+    lastContact?: string;
     preferredChannel?: ContactChannel;
     prayerRequest?: string | null;
     address?: string | null;
-    assimilationStage: string; // stage key, configurable
+    assimilationStage: AssimilationStage;
+    nextAction?: string;
     milestones: Milestone[];
     meta?: Record<string, any>;
+}
+
+export interface GuestFormData extends Omit<Guest, 'id' | 'createdAt' | 'milestones'> {
+    milestones?: Partial<Milestone>[];
 }

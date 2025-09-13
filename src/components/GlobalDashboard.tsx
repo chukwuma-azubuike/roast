@@ -240,8 +240,8 @@ export function GlobalDashboard() {
                                                         {performer.trend === 'up'
                                                             ? 'Rising'
                                                             : performer.trend === 'down'
-                                                            ? 'Declining'
-                                                            : 'Stable'}
+                                                              ? 'Declining'
+                                                              : 'Stable'}
                                                     </span>
                                                 </div>
                                             </div>

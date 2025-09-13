@@ -279,8 +279,8 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
                                                         {worker.guestCount <= 5
                                                             ? 'Light'
                                                             : worker.guestCount <= 10
-                                                            ? 'Moderate'
-                                                            : 'Heavy'}{' '}
+                                                              ? 'Moderate'
+                                                              : 'Heavy'}{' '}
                                                         workload
                                                     </div>
                                                 </div>

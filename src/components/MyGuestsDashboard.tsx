@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
-import {
-    Phone,
-    MessageCircle,
-    Calendar,
-    Clock,
-    ChevronRight,
-    Search,
-    LayoutGrid,
-    List,
-    MoreVertical,
-    Users,
-} from 'lucide-react';
+import { Phone, MessageCircle, Clock, Search, LayoutGrid, List, MoreVertical, Users } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -634,106 +623,6 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
             </div>
         );
     };
-
-    const GuestCard = ({ guest }: { guest: Guest }) => {
-        const progress = getProgressPercentage(guest.milestones);
-        const daysSinceContact = getDaysSinceContact(guest.lastContact);
-
-        return (
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onViewGuest(guest.id)}>
-                <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                            <Avatar className="w-10 h-10">
-                                <AvatarFallback>
-                                    {guest.name
-                                        .split(' ')
-                                        .map(n => n[0])
-                                        .join('')}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h3 className="font-medium">{guest.name}</h3>
-                                <p className="text-sm text-gray-500">{guest.phone}</p>
-                            </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className={getStageColor(guest.stage)}>
-                                {guest.stage.charAt(0).toUpperCase() + guest.stage.slice(1)}
-                            </Badge>
-                            <span className="text-sm text-gray-500">{progress}% complete</span>
-                        </div>
-
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center space-x-1 text-gray-600">
-                                <Clock className="w-4 h-4" />
-                                <span>
-                                    {daysSinceContact === 0
-                                        ? 'Today'
-                                        : daysSinceContact === 1
-                                        ? 'Yesterday'
-                                        : `${daysSinceContact} days ago`}
-                                </span>
-                            </div>
-                            <div className="flex space-x-2">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={e => {
-                                        e.stopPropagation();
-                                        window.open(`tel:${guest.phone}`, '_self');
-                                    }}
-                                >
-                                    <Phone className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={e => {
-                                        e.stopPropagation();
-                                        window.open(`https://wa.me/${guest.phone.replace(/\D/g, '')}`, '_blank');
-                                    }}
-                                >
-                                    <MessageCircle className="w-3 h-3" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2 rounded">
-                            <p className="text-sm text-yellow-800">
-                                <strong>Next:</strong> {guest.nextAction}
-                            </p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    };
-
-    const TabContent = ({ guests }: { guests: Guest[] }) => (
-        <div className="space-y-3">
-            {guests.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                    <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No guests in this category</p>
-                    <p className="text-sm">Start capturing new guests to see them here</p>
-                </div>
-            ) : (
-                guests.map(guest => <GuestCard key={guest.id} guest={guest} />)
-            )}
-        </div>
-    );
 
     const getFilteredGuests = () => {
         let filtered = userGuests;

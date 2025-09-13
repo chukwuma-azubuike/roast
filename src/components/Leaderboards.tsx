@@ -286,8 +286,8 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
                                         {currentUserPosition === 1
                                             ? "You're in the lead!"
                                             : currentUserPosition <= 3
-                                            ? "You're in the top 3!"
-                                            : `Position ${currentUserPosition} of ${workerLeaderboard.length}`}
+                                              ? "You're in the top 3!"
+                                              : `Position ${currentUserPosition} of ${workerLeaderboard.length}`}
                                     </p>
                                 </div>
                             </div>
