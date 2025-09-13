@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Phone, MessageCircle, Calendar, Clock, ChevronRight, Search } from 'lucide-react';
+import { Phone, MessageCircle, Calendar, Clock, ChevronRight, Search, Filter } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Input } from './ui/input';

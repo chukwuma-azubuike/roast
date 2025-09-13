@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus, BarChart3, Trophy, Bell, User } from 'lucide-react';
+import { Users, Plus, BarChart3, Trophy, Bell, User, Settings } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
@@ -12,6 +12,7 @@ import { ZoneDashboard } from './components/ZoneDashboard';
 import { GlobalDashboard } from './components/GlobalDashboard';
 import { Leaderboards } from './components/Leaderboards';
 import { NotificationCenter } from './components/NotificationCenter';
+import { PipelineSettings } from './components/PipelineSettings';
 
 // Mock data and types
 export interface Guest {
@@ -71,7 +72,15 @@ const mockCurrentUser: User = {
     email: 'john@church.org',
 };
 
-type ViewType = 'capture' | 'myGuests' | 'profile' | 'zone' | 'global' | 'leaderboards' | 'notifications';
+type ViewType =
+    | 'capture'
+    | 'myGuests'
+    | 'profile'
+    | 'zone'
+    | 'global'
+    | 'leaderboards'
+    | 'notifications'
+    | 'pipelineSettings';
 
 export default function App() {
     const [currentView, setCurrentView] = useState<ViewType>('myGuests');
@@ -117,6 +126,12 @@ export default function App() {
                 icon: Bell,
                 roles: ['worker', 'coordinator', 'admin', 'pastor'],
             },
+            {
+                id: 'pipelineSettings',
+                label: 'Pipeline Settings',
+                icon: Settings,
+                roles: ['admin', 'pastor'],
+            },
         ];
 
         return baseItems.filter(item => item.roles.includes(currentUser.role));
@@ -152,6 +167,8 @@ export default function App() {
                 return <Leaderboards currentUser={currentUser} />;
             case 'notifications':
                 return <NotificationCenter currentUser={currentUser} />;
+            case 'pipelineSettings':
+                return <PipelineSettings currentUser={currentUser} />;
             default:
                 return <MyGuestsDashboard currentUser={currentUser} onViewGuest={handleViewGuest} />;
         }
