@@ -289,8 +289,30 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [stageFilter, setStageFilter] = useState<Guest['stage'] | 'all'>('all');
 
+    // Filter guests based on search and stage filter
+    const getFilteredGuests = () => {
+        let filtered = guests;
+
+        if (searchTerm) {
+            filtered = filtered.filter(
+                guest =>
+                    guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    guest.phone.includes(searchTerm) ||
+                    (guest.address && guest.address.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        }
+
+        if (stageFilter !== 'all') {
+            filtered = filtered.filter(guest => guest.stage === stageFilter);
+        }
+
+        return filtered;
+    };
+
+    const displayGuests = getFilteredGuests();
+
     // Filter guests by selected zone
-    const zoneGuests = guests.filter(guest => guest.zone === selectedZone);
+    const zoneGuests = displayGuests.filter(guest => guest.zone === selectedZone);
 
     // Group guests by stage
     const guestsByStage = {
@@ -366,7 +388,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
         setSelectedGuests(prev => (prev.includes(guestId) ? prev.filter(id => id !== guestId) : [...prev, guestId]));
     };
 
-    const ListView = () => {
+    const ListView = ({ displayGuests }: any) => {
         const getStageColor = (stage: Guest['stage']) => {
             switch (stage) {
                 case 'invited':
@@ -393,62 +415,8 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
             }
         };
 
-        // Filter guests based on search and stage filter
-        const getFilteredGuests = () => {
-            let filtered = zoneGuests;
-
-            if (searchTerm) {
-                filtered = filtered.filter(
-                    guest =>
-                        guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        guest.phone.includes(searchTerm) ||
-                        (guest.address && guest.address.toLowerCase().includes(searchTerm.toLowerCase()))
-                );
-            }
-
-            if (stageFilter !== 'all') {
-                filtered = filtered.filter(guest => guest.stage === stageFilter);
-            }
-
-            return filtered;
-        };
-
-        const displayGuests = getFilteredGuests();
-
         return (
             <div className="space-y-4">
-                {/* List View Filters */}
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center space-x-4">
-                            <div className="flex-1 relative">
-                                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                                <Input
-                                    placeholder="Search guests by name, phone, or address..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <Select
-                                value={stageFilter}
-                                onValueChange={value => setStageFilter(value as Guest['stage'] | 'all')}
-                            >
-                                <SelectTrigger className="w-48">
-                                    <SelectValue placeholder="Filter by stage" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Stages</SelectItem>
-                                    <SelectItem value="invited">Invited</SelectItem>
-                                    <SelectItem value="attended">Attended</SelectItem>
-                                    <SelectItem value="discipled">Discipled</SelectItem>
-                                    <SelectItem value="joined">Joined Workforce</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </CardContent>
-                </Card>
-
                 {/* Guest List Table */}
                 <Card>
                     <CardHeader>
@@ -615,6 +583,39 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
         );
     };
 
+    const SearchAndFilter = () => {
+        return (
+            <div className="flex items-center space-x-4">
+                <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                    <Input
+                        placeholder="Search guests by name, phone, or address..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+                {viewMode == 'list' && (
+                    <Select
+                        value={stageFilter}
+                        onValueChange={value => setStageFilter(value as Guest['stage'] | 'all')}
+                    >
+                        <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Filter by stage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Stages</SelectItem>
+                            <SelectItem value="invited">Invited</SelectItem>
+                            <SelectItem value="attended">Attended</SelectItem>
+                            <SelectItem value="discipled">Discipled</SelectItem>
+                            <SelectItem value="joined">Joined Workforce</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="p-4 space-y-4">
             {/* Header */}
@@ -761,6 +762,8 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                 </ToggleGroup>
             </div>
 
+            <SearchAndFilter />
+
             {/* View Content */}
             {viewMode === 'kanban' ? (
                 <div className="flex space-x-4 overflow-x-auto pb-4">
@@ -810,7 +813,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                     />
                 </div>
             ) : (
-                <ListView />
+                <ListView displayGuests={displayGuests} />
             )}
         </div>
     );

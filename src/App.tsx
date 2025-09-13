@@ -21,7 +21,7 @@ export interface Guest {
     phone: string;
     zone: string;
     assignedWorker: string;
-    stage: 'invited' | 'attended' | 'discipled' | 'joined';
+    stage: 'invited' | 'attended' | 'attended_2' | 'discipled' | 'joined';
     createdAt: Date;
     lastContact: Date;
     nextAction: string;
