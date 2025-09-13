@@ -202,7 +202,7 @@ export default function App() {
                                     <SelectItem value="pastor">Pastor</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <Badge variant="outline" className="capitalize">
+                            <Badge variant="outline" className="capitalize hidden sm:inline">
                                 {currentUser.role}
                             </Badge>
                         </div>
