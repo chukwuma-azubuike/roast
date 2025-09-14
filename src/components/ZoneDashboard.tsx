@@ -26,95 +26,22 @@ import { Input } from './ui/input';
 
 import { GuestReassignmentDialog } from './GuestReassignmentDialog';
 import { toast } from 'sonner';
-import type { User, Guest } from '../App';
+import { User, Guest, Role, AssimilationStage } from '../store/types';
+import { useGetGuestsQuery, useGetUsersQuery, useGetZonesQuery, useUpdateGuestMutation } from '../store/api';
 
 interface ZoneDashboardProps {
     currentUser: User;
 }
 
-// Mock data for zone guests
-const mockZoneGuests: Guest[] = [
-    {
-        id: 'guest1',
-        name: 'Sarah Johnson',
-        phone: '+1 (555) 123-4567',
-        zone: 'zone1',
-        assignedWorker: 'worker1',
-        stage: 'invited',
-        createdAt: new Date('2024-12-10'),
-        lastContact: new Date('2024-12-10'),
-        nextAction: 'Follow-up call',
-        milestones: [],
-        timeline: [],
-    },
-    {
-        id: 'guest2',
-        name: 'Mike Chen',
-        phone: '+1 (555) 987-6543',
-        zone: 'zone1',
-        assignedWorker: 'worker1',
-        stage: 'attended',
-        createdAt: new Date('2024-12-08'),
-        lastContact: new Date('2024-12-12'),
-        nextAction: 'Small group invite',
-        milestones: [],
-        timeline: [],
-    },
-    {
-        id: 'guest3',
-        name: 'Emily Rodriguez',
-        phone: '+1 (555) 456-7890',
-        zone: 'zone1',
-        assignedWorker: 'worker2',
-        stage: 'discipled',
-        createdAt: new Date('2024-11-15'),
-        lastContact: new Date('2024-12-13'),
-        nextAction: 'Bible study check',
-        milestones: [],
-        timeline: [],
-    },
-    {
-        id: 'guest4',
-        name: 'David Kim',
-        phone: '+1 (555) 789-0123',
-        zone: 'zone1',
-        assignedWorker: 'worker2',
-        stage: 'joined',
-        createdAt: new Date('2024-10-05'),
-        lastContact: new Date('2024-12-14'),
-        nextAction: 'Ministry placement',
-        milestones: [],
-        timeline: [],
-    },
-    {
-        id: 'guest5',
-        name: 'Lisa Zhang',
-        phone: '+1 (555) 321-0987',
-        zone: 'zone1',
-        assignedWorker: 'worker3',
-        stage: 'invited',
-        createdAt: new Date('2024-12-12'),
-        lastContact: new Date('2024-12-12'),
-        nextAction: 'Service invitation',
-        milestones: [],
-        timeline: [],
-    },
-];
-
-const mockWorkers = [
-    { id: 'worker1', name: 'John Worker', email: 'john@church.org' },
-    { id: 'worker2', name: 'Mary Helper', email: 'mary@church.org' },
-    { id: 'worker3', name: 'Paul Evangelist', email: 'paul@church.org' },
-];
-
 interface KanbanColumnProps {
     title: string;
-    stage: Guest['stage'];
+    stage: AssimilationStage;
     guests: Guest[];
     currentUser: User;
+    workers: User[];
     bulkReassignMode: boolean;
     selectedGuests: string[];
-    onGuestMove: (guestId: string, newStage: Guest['stage']) => void;
+    onGuestMove: (guestId: string, newStage: AssimilationStage) => void;
     onReassignWorker: (guestId: string, workerId: string, zoneId?: string) => void;
     onToggleGuestSelection: (guestId: string) => void;
 }
@@ -123,6 +50,7 @@ function KanbanColumn({
     title,
     stage,
     guests,
+    workers,
     currentUser,
     bulkReassignMode,
     selectedGuests,
@@ -194,23 +122,23 @@ function KanbanColumn({
             <div className="space-y-3">
                 {guests.map(guest => (
                     <Card
-                        key={guest.id}
+                        key={guest._id}
                         className={`cursor-move hover:shadow-md transition-shadow bg-white ${
-                            bulkReassignMode && selectedGuests.includes(guest.id)
+                            bulkReassignMode && selectedGuests.includes(guest._id)
                                 ? 'ring-2 ring-blue-500 bg-blue-50'
                                 : ''
                         }`}
                         draggable={!bulkReassignMode}
-                        onDragStart={e => !bulkReassignMode && handleDragStart(e, guest.id)}
-                        onClick={() => bulkReassignMode && onToggleGuestSelection(guest.id)}
+                        onDragStart={e => !bulkReassignMode && handleDragStart(e, guest._id)}
+                        onClick={() => bulkReassignMode && onToggleGuestSelection(guest._id)}
                     >
                         <CardContent className="p-3">
                             <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center space-x-2">
                                     {bulkReassignMode && (
                                         <Checkbox
-                                            checked={selectedGuests.includes(guest.id)}
-                                            onCheckedChange={() => onToggleGuestSelection(guest.id)}
+                                            checked={selectedGuests.includes(guest._id)}
+                                            onCheckedChange={() => onToggleGuestSelection(guest._id)}
                                         />
                                     )}
                                     <Avatar className="w-8 h-8">
@@ -254,7 +182,7 @@ function KanbanColumn({
                             <div className="space-y-2">
                                 <div className="text-xs text-gray-600">
                                     <strong>Assigned:</strong>{' '}
-                                    {mockWorkers.find(w => w.id === guest.assignedWorker)?.name || 'Unassigned'}
+                                    {workers.find(w => w._id === guest.assignedToId)?.name || 'Unassigned'}
                                 </div>
 
                                 <div className="text-xs bg-yellow-50 border border-yellow-200 rounded p-2">
@@ -262,7 +190,7 @@ function KanbanColumn({
                                 </div>
 
                                 <div className="text-xs text-gray-500">
-                                    Last contact: {guest.lastContact.toLocaleDateString()}
+                                    Last contact: {guest.lastContact?.toLocaleString()}
                                 </div>
                             </div>
                         </CardContent>
@@ -281,13 +209,18 @@ function KanbanColumn({
 }
 
 export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
-    const [guests, setGuests] = useState<Guest[]>(mockZoneGuests);
-    const [selectedZone, setSelectedZone] = useState(currentUser.zone || 'zone1');
+    const [selectedZone, setSelectedZone] = useState<string>(currentUser.zoneIds?.[0] || 'zone-1');
     const [bulkReassignMode, setBulkReassignMode] = useState(false);
     const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
     const [searchTerm, setSearchTerm] = useState('');
-    const [stageFilter, setStageFilter] = useState<Guest['stage'] | 'all'>('all');
+    const [stageFilter, setStageFilter] = useState<Guest['assimilationStage'] | 'all'>('all');
+
+    // RTK Queries
+    const { data: guests = [], isLoading: loadingGuests } = useGetGuestsQuery({ zoneId: selectedZone });
+    const { data: users = [] } = useGetUsersQuery({});
+    const { data: zones = [] } = useGetZonesQuery();
+    const [updateGuest] = useUpdateGuestMutation();
 
     // Filter guests based on search and stage filter
     const getFilteredGuests = () => {
@@ -303,7 +236,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
         }
 
         if (stageFilter !== 'all') {
-            filtered = filtered.filter(guest => guest.stage === stageFilter);
+            filtered = filtered.filter(guest => guest.assimilationStage === stageFilter);
         }
 
         return filtered;
@@ -311,85 +244,91 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
 
     const displayGuests = getFilteredGuests();
 
-    // Filter guests by selected zone
-    const zoneGuests = displayGuests.filter(guest => guest.zone === selectedZone);
+    // Filter guests by selected zoneId
+    const zoneGuests = displayGuests.filter(guest => guest.zoneId === selectedZone);
 
     // Group guests by stage
     const guestsByStage = {
-        invited: zoneGuests.filter(g => g.stage === 'invited'),
-        attended: zoneGuests.filter(g => g.stage === 'attended'),
-        discipled: zoneGuests.filter(g => g.stage === 'discipled'),
-        joined: zoneGuests.filter(g => g.stage === 'joined'),
+        invited: zoneGuests.filter(g => g.assimilationStage === 'invited'),
+        attended: zoneGuests.filter(g => g.assimilationStage === 'attended'),
+        discipled: zoneGuests.filter(g => g.assimilationStage === 'discipled'),
+        joined: zoneGuests.filter(g => g.assimilationStage === 'joined'),
     };
 
-    const handleGuestMove = (guestId: string, newStage: Guest['stage']) => {
-        setGuests(prev =>
-            prev.map(guest => (guest.id === guestId ? { ...guest, stage: newStage, lastContact: new Date() } : guest))
-        );
-        toast.success(`Guest moved to ${newStage} stage`);
-    };
-
-    const handleReassignWorker = (guestId: string, workerId: string, zoneId?: string) => {
-        setGuests(prev =>
-            prev.map(guest =>
-                guest.id === guestId
-                    ? {
-                          ...guest,
-                          assignedWorker: workerId,
-                          zone: zoneId || guest.zone,
-                          lastContact: new Date(),
-                      }
-                    : guest
-            )
-        );
-
-        // If guest was moved to a different zone, update selected zone to follow the guest
-        if (zoneId && zoneId !== selectedZone && (currentUser.role === 'admin' || currentUser.role === 'pastor')) {
-            setSelectedZone(zoneId);
+    const handleGuestMove = async (guestId: string, newStage: Guest['assimilationStage']) => {
+        try {
+            await updateGuest({ _id: guestId, assimilationStage: newStage, lastContact: new Date().toISOString() });
+            toast.success(`Guest moved to ${newStage} stage`);
+        } catch (error) {
+            toast.error('Failed to update guest stage');
         }
     };
 
-    // Calculate zone stats
+    const handleReassignWorker = async (guestId: string, workerId: string, zoneId?: string) => {
+        try {
+            await updateGuest({
+                _id: guestId,
+                assignedToId: workerId,
+                zoneId: zoneId || selectedZone,
+                lastContact: new Date().toISOString(),
+            });
+
+            // If guest was moved to a different zoneId, update selected zoneId to follow the guest
+            if (
+                zoneId &&
+                zoneId !== selectedZone &&
+                (currentUser.role === Role.ADMIN || currentUser.role === Role.PASTOR)
+            ) {
+                setSelectedZone(zoneId);
+            }
+
+            toast.success('Worker reassigned successfully');
+        } catch (error) {
+            toast.error('Failed to reassign worker');
+        }
+    };
+
+    // Calculate zoneId stats
     const totalGuests = zoneGuests.length;
     const conversionRate = totalGuests > 0 ? Math.round((guestsByStage.joined.length / totalGuests) * 100) : 0;
     const activeThisWeek = zoneGuests.filter(g => {
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
-        return g.lastContact >= weekAgo;
+        return g.lastContact ? new Date(g.lastContact) >= weekAgo : false;
     }).length;
 
-    const zones = [
-        { id: 'zone1', name: 'Central Zone' },
-        { id: 'zone2', name: 'North Zone' },
-        { id: 'zone3', name: 'South Zone' },
-    ];
-
-    const handleBulkReassign = (workerId: string) => {
+    const handleBulkReassign = async (workerId: string) => {
         if (selectedGuests.length === 0) {
             toast.error('Please select guests to reassign');
             return;
         }
 
-        setGuests(prev =>
-            prev.map(guest =>
-                selectedGuests.includes(guest.id)
-                    ? { ...guest, assignedWorker: workerId, lastContact: new Date() }
-                    : guest
-            )
-        );
+        try {
+            await Promise.all(
+                selectedGuests.map(guestId =>
+                    updateGuest({
+                        _id: guestId,
+                        assignedToId: workerId,
+                        lastContact: new Date().toISOString(),
+                    })
+                )
+            );
 
-        const worker = mockWorkers.find(w => w.id === workerId);
-        toast.success(`${selectedGuests.length} guests reassigned to ${worker?.name}`);
-        setSelectedGuests([]);
-        setBulkReassignMode(false);
+            const worker = users.find(w => w._id === workerId);
+            toast.success(`${selectedGuests.length} guests reassigned to ${worker?.name}`);
+            setSelectedGuests([]);
+            setBulkReassignMode(false);
+        } catch (error) {
+            toast.error('Failed to reassign some guests');
+        }
     };
 
     const toggleGuestSelection = (guestId: string) => {
-        setSelectedGuests(prev => (prev.includes(guestId) ? prev.filter(id => id !== guestId) : [...prev, guestId]));
+        setSelectedGuests(prev => (prev.includes(guestId) ? prev.filter(_id => _id !== guestId) : [...prev, guestId]));
     };
 
     const ListView = ({ displayGuests }: any) => {
-        const getStageColor = (stage: Guest['stage']) => {
+        const getStageColor = (stage: Guest['assimilationStage']) => {
             switch (stage) {
                 case 'invited':
                     return 'bg-blue-100 text-blue-800';
@@ -402,7 +341,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
             }
         };
 
-        const getStageText = (stage: Guest['stage']) => {
+        const getStageText = (stage: Guest['assimilationStage']) => {
             switch (stage) {
                 case 'invited':
                     return 'Invited';
@@ -442,16 +381,16 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                             <TableBody>
                                 {displayGuests.map(guest => (
                                     <TableRow
-                                        key={guest.id}
+                                        key={guest._id}
                                         className={`${
-                                            bulkReassignMode && selectedGuests.includes(guest.id) ? 'bg-blue-50' : ''
+                                            bulkReassignMode && selectedGuests.includes(guest._id) ? 'bg-blue-50' : ''
                                         }`}
                                     >
                                         {bulkReassignMode && (
                                             <TableCell>
                                                 <Checkbox
-                                                    checked={selectedGuests.includes(guest.id)}
-                                                    onCheckedChange={() => toggleGuestSelection(guest.id)}
+                                                    checked={selectedGuests.includes(guest._id)}
+                                                    onCheckedChange={() => toggleGuestSelection(guest._id)}
                                                 />
                                             </TableCell>
                                         )}
@@ -493,7 +432,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                                             <Select
                                                 value={guest.stage}
                                                 onValueChange={newStage =>
-                                                    handleGuestMove(guest.id, newStage as Guest['stage'])
+                                                    handleGuestMove(guest._id, newStage as Guest['assimilationStage'])
                                                 }
                                             >
                                                 <SelectTrigger className="w-32">
@@ -533,8 +472,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                                         </TableCell>
                                         <TableCell>
                                             <div className="text-sm">
-                                                {mockWorkers.find(w => w.id === guest.assignedWorker)?.name ||
-                                                    'Unassigned'}
+                                                {users.find(w => w._id === guest.assignedToId)?.name || 'Unassigned'}
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -598,7 +536,7 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                 {viewMode == 'list' && (
                     <Select
                         value={stageFilter}
-                        onValueChange={value => setStageFilter(value as Guest['stage'] | 'all')}
+                        onValueChange={value => setStageFilter(value as Guest['assimilationStage'] | 'all')}
                     >
                         <SelectTrigger className="w-48">
                             <SelectValue placeholder="Filter by stage" />
@@ -621,19 +559,19 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
             {/* Header */}
             <div>
                 <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-bold">{zones.find(z => z.id === selectedZone)?.name} Dashboard</h1>
+                    <h1 className="text-2xl font-bold">{zones.find(z => z._id === selectedZone)?.name} Dashboard</h1>
 
                     {/* Zone Selector */}
-                    {currentUser.role === 'admin' ||
-                        (currentUser.role === 'pastor' && (
+                    {currentUser.role === Role.ADMIN ||
+                        (currentUser.role === Role.PASTOR && (
                             <Select value={selectedZone} onValueChange={setSelectedZone}>
                                 <SelectTrigger className="w-48">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {zones.map(zone => (
-                                        <SelectItem key={zone.id} value={zone.id}>
-                                            {zone.name}
+                                    {zones.map(zoneId => (
+                                        <SelectItem key={zoneId._id} value={zoneId._id}>
+                                            {zoneId.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -663,7 +601,9 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                     </Card>
                     <Card>
                         <CardContent className="p-4 text-center">
-                            <div className="text-2xl font-bold text-orange-600">{mockWorkers.length}</div>
+                            <div className="text-2xl font-bold text-orange-600">
+                                {users.filter(u => u.role === Role.WORKER).length}
+                            </div>
                             <div className="text-sm text-gray-600">Active Workers</div>
                         </CardContent>
                     </Card>
@@ -720,11 +660,13 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                                 <SelectValue placeholder="Assign to..." />
                             </SelectTrigger>
                             <SelectContent>
-                                {mockWorkers.map(worker => (
-                                    <SelectItem key={worker.id} value={worker.id}>
-                                        {worker.name}
-                                    </SelectItem>
-                                ))}
+                                {users
+                                    .filter(u => u.role === Role.WORKER)
+                                    .map(worker => (
+                                        <SelectItem key={worker._id} value={worker._id}>
+                                            {worker.name}
+                                        </SelectItem>
+                                    ))}
                             </SelectContent>
                         </Select>
                         <Button
@@ -769,7 +711,8 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                 <div className="flex space-x-4 overflow-x-auto pb-4">
                     <KanbanColumn
                         title="Invited"
-                        stage="invited"
+                        workers={users}
+                        stage={AssimilationStage.INVITED}
                         guests={guestsByStage.invited}
                         currentUser={currentUser}
                         bulkReassignMode={bulkReassignMode}
@@ -780,7 +723,8 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                     />
                     <KanbanColumn
                         title="Attended"
-                        stage="attended"
+                        workers={users}
+                        stage={AssimilationStage.ATTENDED}
                         guests={guestsByStage.attended}
                         currentUser={currentUser}
                         bulkReassignMode={bulkReassignMode}
@@ -791,7 +735,8 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                     />
                     <KanbanColumn
                         title="Discipled"
-                        stage="discipled"
+                        workers={users}
+                        stage={AssimilationStage.DISCIPLED}
                         guests={guestsByStage.discipled}
                         currentUser={currentUser}
                         bulkReassignMode={bulkReassignMode}
@@ -802,7 +747,8 @@ export function ZoneDashboard({ currentUser }: ZoneDashboardProps) {
                     />
                     <KanbanColumn
                         title="Joined Workforce"
-                        stage="joined"
+                        workers={users}
+                        stage={AssimilationStage.JOINED}
                         guests={guestsByStage.joined}
                         currentUser={currentUser}
                         bulkReassignMode={bulkReassignMode}

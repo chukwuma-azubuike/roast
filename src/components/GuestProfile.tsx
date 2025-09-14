@@ -20,64 +20,26 @@ import { Textarea } from './ui/textarea';
 import { Progress } from './ui/progress';
 import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner';
-import type { Guest } from '../App';
+import { Guest, MilestoneStatus, AssimilationStage, Timeline, ContactChannel } from '../store/types';
+import { useGetGuestByIdQuery, useUpdateGuestMutation, useGetEngagementsForGuestQuery, useAddEngagementMutation } from '../store/api';
 
 interface GuestProfileProps {
     guestId: string | null;
     onBack: () => void;
 }
 
-// Mock guest data - in real app this would be fetched by ID
-const mockGuest: Guest = {
-    id: 'guest1',
-    name: 'Sarah Johnson',
-    phone: '+1 (555) 123-4567',
-    zone: 'zone1',
-    assignedWorker: 'user1',
-    stage: 'invited',
-    createdAt: new Date('2024-12-10'),
-    lastContact: new Date('2024-12-10'),
-    nextAction: 'Follow-up call tomorrow',
-    address: '123 Main St, Anytown, State 12345',
-    prayerRequest: 'Pray for her mother who is recovering from surgery. Also seeking guidance about career change.',
-    milestones: [
-        { id: 'm1', title: 'Initial Contact', completed: true, completedAt: new Date('2024-12-10') },
-        { id: 'm2', title: 'First Phone Call', completed: false },
-        { id: 'm3', title: 'Service Invitation', completed: false },
-        { id: 'm4', title: 'First Visit', completed: false },
-        { id: 'm5', title: 'Small Group Invitation', completed: false },
-        { id: 'm6', title: 'Bible Study Started', completed: false },
-        { id: 'm7', title: 'Baptism Preparation', completed: false },
-        { id: 'm8', title: 'Join Ministry Team', completed: false },
-    ],
-    timeline: [
-        {
-            id: 't1',
-            type: 'note',
-            description:
-                'Met during street evangelism. Interested in learning more about faith. Very friendly and open to conversation.',
-            createdAt: new Date('2024-12-10T14:30:00'),
-            createdBy: 'user1',
-        },
-        {
-            id: 't2',
-            type: 'call',
-            description: 'Initial contact call. Confirmed interest in attending Sunday service.',
-            createdAt: new Date('2024-12-10T16:45:00'),
-            createdBy: 'user1',
-        },
-    ],
-};
-
 export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
-    const [guest, setGuest] = useState<Guest>(mockGuest);
+    const { data: guest, isLoading } = useGetGuestByIdQuery(guestId || '');
+    const { data: engagements = [] } = useGetEngagementsForGuestQuery(guestId || '', { skip: !guestId });
+    const [updateGuest] = useUpdateGuestMutation();
+    const [addEngagement] = useAddEngagementMutation();
     const [newNote, setNewNote] = useState('');
     const [isAddingNote, setIsAddingNote] = useState(false);
 
-    if (!guestId) {
+    if (!guestId || !guest || isLoading) {
         return (
             <div className="p-4 text-center">
-                <p>Guest not found</p>
+                <p>{isLoading ? 'Loading...' : 'Guest not found'}</p>
                 <Button onClick={onBack} className="mt-4">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
@@ -86,7 +48,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
         );
     }
 
-    const getStageColor = (stage: Guest['stage']) => {
+    const getStageColor = (stage: Guest['assimilationStage']) => {
         switch (stage) {
             case 'invited':
                 return 'bg-blue-100 text-blue-800';
@@ -102,42 +64,53 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
     };
 
     const getProgressPercentage = () => {
-        const completed = guest.milestones.filter(m => m.completed).length;
+        if (!guest?.milestones?.length) return 0;
+        const completed = guest.milestones.filter(m => m.status === MilestoneStatus.COMPLETED).length;
         return Math.round((completed / guest.milestones.length) * 100);
     };
 
-    const handleMilestoneToggle = (milestoneId: string) => {
-        setGuest(prev => ({
-            ...prev,
-            milestones: prev.milestones.map(m =>
-                m.id === milestoneId
-                    ? { ...m, completed: !m.completed, completedAt: m.completed ? undefined : new Date() }
+    const handleMilestoneToggle = async (milestoneId: string) => {
+        if (!guest) return;
+
+        try {
+            const updatedMilestones = guest.milestones.map(m =>
+                m._id === milestoneId
+                    ? {
+                          ...m,
+                          status: m.status === MilestoneStatus.COMPLETED ? MilestoneStatus.PENDING : MilestoneStatus.COMPLETED,
+                          completedAt: m.status === MilestoneStatus.COMPLETED ? undefined : new Date().toISOString(),
+                      }
                     : m
-            ),
-        }));
-        toast.success('Milestone updated');
+            );
+
+            await updateGuest({ 
+                _id: guest._id, 
+                milestones: updatedMilestones,
+                lastContact: new Date().toISOString()
+            });
+            toast.success('Milestone updated');
+        } catch (error) {
+            toast.error('Failed to update milestone');
+        }
     };
 
-    const handleAddNote = () => {
-        if (!newNote.trim()) return;
+    const handleAddNote = async () => {
+        if (!newNote.trim() || !guest) return;
 
-        const note = {
-            id: `t${Date.now()}`,
-            type: 'note' as const,
-            description: newNote,
-            createdAt: new Date(),
-            createdBy: 'user1',
-        };
+        try {
+            await addEngagement({
+                guestId: guest._id,
+                workerId: 'user1', // Should come from auth context in real app
+                type: ContactChannel.WHATSAPP, // Using WhatsApp as the default channel
+                notes: newNote,
+            });
 
-        setGuest(prev => ({
-            ...prev,
-            timeline: [note, ...prev.timeline],
-            lastContact: new Date(),
-        }));
-
-        setNewNote('');
-        setIsAddingNote(false);
-        toast.success('Note added');
+            setNewNote('');
+            setIsAddingNote(false);
+            toast.success('Note added');
+        } catch (error) {
+            toast.error('Failed to add note');
+        }
     };
 
     const formatTimelineDate = (date: Date) => {
@@ -192,8 +165,8 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                         <div className="flex-1">
                             <h1 className="text-2xl font-bold mb-2">{guest.name}</h1>
                             <div className="flex items-center space-x-2 mb-2">
-                                <Badge variant="secondary" className={getStageColor(guest.stage)}>
-                                    {guest.stage.charAt(0).toUpperCase() + guest.stage.slice(1)}
+                                <Badge variant="secondary" className={getStageColor(guest.assimilationStage)}>
+                                    {guest.assimilationStage.charAt(0).toUpperCase() + guest.assimilationStage.slice(1)}
                                 </Badge>
                                 <span className="text-sm text-gray-500">{getProgressPercentage()}% complete</span>
                             </div>
@@ -231,7 +204,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                         )}
                         <div className="flex items-center space-x-2">
                             <Calendar className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm">Added {guest.createdAt.toLocaleDateString()}</span>
+                            <span className="text-sm">Added {new Date(guest.createdAt).toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -255,19 +228,25 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
-                        {guest.milestones.map((milestone, index) => (
-                            <div key={milestone.id} className="flex items-center space-x-3">
+                        {guest.milestones?.map((milestone, index) => (
+                            <div key={milestone._id} className="flex items-center space-x-3">
                                 <Checkbox
-                                    checked={milestone.completed}
-                                    onCheckedChange={() => handleMilestoneToggle(milestone.id)}
+                                    checked={milestone.status === MilestoneStatus.COMPLETED}
+                                    onCheckedChange={() => handleMilestoneToggle(milestone._id)}
                                 />
                                 <div className="flex-1">
-                                    <span className={milestone.completed ? 'line-through text-gray-500' : ''}>
+                                    <span
+                                        className={
+                                            milestone.status === MilestoneStatus.COMPLETED
+                                                ? 'line-through text-gray-500'
+                                                : ''
+                                        }
+                                    >
                                         {milestone.title}
                                     </span>
-                                    {milestone.completed && milestone.completedAt && (
+                                    {milestone.status === MilestoneStatus.COMPLETED && milestone.completedAt && (
                                         <span className="text-xs text-gray-500 ml-2">
-                                            ✓ {milestone.completedAt.toLocaleDateString()}
+                                            ✓ {milestone.completedAt.toLocaleString()}
                                         </span>
                                     )}
                                 </div>
@@ -324,13 +303,15 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
 
                     {/* Timeline Items */}
                     <div className="space-y-4">
-                        {guest.timeline.map((item, index) => (
-                            <div key={item.id} className="flex space-x-3">
+                        {engagements.map((item, index) => (
+                            <div key={item._id} className="flex space-x-3">
                                 <div className="flex flex-col items-center">
                                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                                         {getTimelineIcon(item.type)}
                                     </div>
-                                    {index < guest.timeline.length - 1 && <div className="w-px bg-gray-200 h-8 mt-2" />}
+                                    {index < engagements.length - 1 && (
+                                        <div className="w-px bg-gray-200 h-8 mt-2" />
+                                    )}
                                 </div>
                                 <div className="flex-1 pb-4">
                                     <div className="flex items-center justify-between mb-1">
@@ -338,16 +319,16 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                                             {item.type}
                                         </Badge>
                                         <span className="text-xs text-gray-500">
-                                            {formatTimelineDate(item.createdAt)}
+                                            {formatTimelineDate(new Date(item.timestamp))}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-700">{item.description}</p>
+                                    <p className="text-sm text-gray-700">{item.notes}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {guest.timeline.length === 0 && (
+                    {engagements.length === 0 && (
                         <div className="text-center py-8 text-gray-500">
                             <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
                             <p>No interactions recorded yet</p>

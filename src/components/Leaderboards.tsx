@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import type { User } from '../App';
+import { User, Role } from '../store/types';
 
 interface LeaderboardsProps {
     currentUser: User;
@@ -252,8 +252,8 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
     };
 
     // Find current user's position
-    const currentUserPosition = workerLeaderboard.findIndex(worker => worker.id === currentUser.id) + 1;
-    const currentUserData = workerLeaderboard.find(worker => worker.id === currentUser.id);
+    const currentUserPosition = workerLeaderboard.findIndex(worker => worker.id === currentUser._id) + 1;
+    const currentUserData = workerLeaderboard.find(worker => worker.id === currentUser._id);
 
     return (
         <div className="p-4 max-w-4xl mx-auto space-y-6">
@@ -274,7 +274,7 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
             </div>
 
             {/* Current User Stats */}
-            {currentUser.role === 'worker' && currentUserData && (
+            {currentUser.role === Role.WORKER && currentUserData && (
                 <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-4">
@@ -326,7 +326,7 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
                     {workerLeaderboard.map((worker, index) => (
                         <Card
                             key={worker.id}
-                            className={worker.id === currentUser.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
+                            className={worker.id === currentUser._id ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
                         >
                             <CardContent className="p-4">
                                 <div className="flex items-start sm:items-center space-x-4">

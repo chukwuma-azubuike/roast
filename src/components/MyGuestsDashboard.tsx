@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Phone, MessageCircle, Clock, Search, LayoutGrid, List, MoreVertical, Users } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -9,137 +9,20 @@ import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import type { User, Guest } from '../App';
+import { User, Guest, AssimilationStage, MilestoneStatus } from '../store/types';
 import { toast } from 'sonner';
+import { useGetGuestsQuery } from '../store/api';
 
 interface MyGuestsDashboardProps {
     currentUser: User;
     onViewGuest: (guestId: string) => void;
 }
 
-// Mock guests data
-const mockGuests: Guest[] = [
-    {
-        id: 'guest1',
-        name: 'Sarah Johnson',
-        phone: '+1 (555) 123-4567',
-        zone: 'zone1',
-        assignedWorker: 'user1',
-        stage: 'invited',
-        createdAt: new Date('2024-12-10'),
-        lastContact: new Date('2024-12-10'),
-        nextAction: 'Follow-up call tomorrow',
-        address: '123 Main St, City',
-        milestones: [
-            { id: 'm1', title: 'Initial Contact', completed: true, completedAt: new Date('2024-12-10') },
-            { id: 'm2', title: 'First Phone Call', completed: false },
-            { id: 'm3', title: 'Service Invitation', completed: false },
-            { id: 'm4', title: 'First Visit', completed: false },
-        ],
-        timeline: [
-            {
-                id: 't1',
-                type: 'note',
-                description: 'Met during street evangelism. Interested in learning more about faith.',
-                createdAt: new Date('2024-12-10'),
-                createdBy: 'user1',
-            },
-        ],
-    },
-    {
-        id: 'guest2',
-        name: 'Mike Chen',
-        phone: '+1 (555) 987-6543',
-        zone: 'zone1',
-        assignedWorker: 'user1',
-        stage: 'attended',
-        createdAt: new Date('2024-12-08'),
-        lastContact: new Date('2024-12-12'),
-        nextAction: 'Invite to small group',
-        milestones: [
-            { id: 'm1', title: 'Initial Contact', completed: true, completedAt: new Date('2024-12-08') },
-            { id: 'm2', title: 'First Phone Call', completed: true, completedAt: new Date('2024-12-09') },
-            { id: 'm3', title: 'Service Invitation', completed: true, completedAt: new Date('2024-12-11') },
-            { id: 'm4', title: 'First Visit', completed: true, completedAt: new Date('2024-12-12') },
-            { id: 'm5', title: 'Small Group Invitation', completed: false },
-        ],
-        timeline: [
-            {
-                id: 't1',
-                type: 'note',
-                description: 'Attended Sunday service. Very engaged during worship.',
-                createdAt: new Date('2024-12-12'),
-                createdBy: 'user1',
-            },
-        ],
-    },
-    {
-        id: 'guest3',
-        name: 'Emily Rodriguez',
-        phone: '+1 (555) 456-7890',
-        zone: 'zone1',
-        assignedWorker: 'user1',
-        stage: 'discipled',
-        createdAt: new Date('2024-11-15'),
-        lastContact: new Date('2024-12-13'),
-        nextAction: 'Check progress on Bible study',
-        milestones: [
-            { id: 'm1', title: 'Initial Contact', completed: true, completedAt: new Date('2024-11-15') },
-            { id: 'm2', title: 'First Phone Call', completed: true, completedAt: new Date('2024-11-16') },
-            { id: 'm3', title: 'Service Invitation', completed: true, completedAt: new Date('2024-11-18') },
-            { id: 'm4', title: 'First Visit', completed: true, completedAt: new Date('2024-11-20') },
-            { id: 'm5', title: 'Small Group Invitation', completed: true, completedAt: new Date('2024-11-25') },
-            { id: 'm6', title: 'Bible Study Started', completed: true, completedAt: new Date('2024-12-01') },
-            { id: 'm7', title: 'Baptism Preparation', completed: false },
-        ],
-        timeline: [
-            {
-                id: 't1',
-                type: 'note',
-                description: 'Completed first month of Bible study. Showing great spiritual growth.',
-                createdAt: new Date('2024-12-13'),
-                createdBy: 'user1',
-            },
-        ],
-    },
-    {
-        id: 'guest4',
-        name: 'David Park',
-        phone: '+1 (555) 321-9876',
-        zone: 'zone1',
-        assignedWorker: 'user1',
-        stage: 'joined',
-        createdAt: new Date('2024-10-05'),
-        lastContact: new Date('2024-12-14'),
-        nextAction: 'Assign ministry role',
-        milestones: [
-            { id: 'm1', title: 'Initial Contact', completed: true, completedAt: new Date('2024-10-05') },
-            { id: 'm2', title: 'First Phone Call', completed: true, completedAt: new Date('2024-10-06') },
-            { id: 'm3', title: 'Service Invitation', completed: true, completedAt: new Date('2024-10-08') },
-            { id: 'm4', title: 'First Visit', completed: true, completedAt: new Date('2024-10-10') },
-            { id: 'm5', title: 'Small Group Invitation', completed: true, completedAt: new Date('2024-10-15') },
-            { id: 'm6', title: 'Bible Study Started', completed: true, completedAt: new Date('2024-11-01') },
-            { id: 'm7', title: 'Baptism Preparation', completed: true, completedAt: new Date('2024-11-20') },
-            { id: 'm8', title: 'Baptized', completed: true, completedAt: new Date('2024-12-01') },
-            { id: 'm9', title: 'Joined Workforce', completed: true, completedAt: new Date('2024-12-10') },
-        ],
-        timeline: [
-            {
-                id: 't1',
-                type: 'note',
-                description: 'Officially joined the church workforce. Ready for ministry assignment.',
-                createdAt: new Date('2024-12-14'),
-                createdBy: 'user1',
-            },
-        ],
-    },
-];
-
 interface KanbanColumnProps {
     title: string;
-    stage: Guest['stage'];
-    guests: Guest[];
-    onGuestMove: (guestId: string, newStage: Guest['stage']) => void;
+    stage: Guest['assimilationStage'];
+    guests?: Guest[];
+    onGuestMove: (guestId: string, newStage: Guest['assimilationStage']) => void;
     onViewGuest: (guestId: string) => void;
 }
 
@@ -191,13 +74,14 @@ function KanbanColumn({ title, stage, guests, onGuestMove, onViewGuest }: Kanban
     };
 
     const getProgressPercentage = (milestones: Guest['milestones']) => {
-        const completed = milestones.filter(m => m.completed).length;
+        const completed = milestones.filter(m => m.status === MilestoneStatus.COMPLETED).length;
         return Math.round((completed / milestones.length) * 100);
     };
 
     const getDaysSinceContact = (lastContact: Date) => {
         const today = new Date();
-        const diffTime = today.getTime() - lastContact.getTime();
+
+        const diffTime = today.getTime() - lastContact?.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return diffDays;
     };
@@ -212,22 +96,22 @@ function KanbanColumn({ title, stage, guests, onGuestMove, onViewGuest }: Kanban
                 <h3 className="font-semibold flex items-center space-x-2">
                     <span>{title}</span>
                     <Badge variant="secondary" className={getBadgeColor()}>
-                        {guests.length}
+                        {guests?.length}
                     </Badge>
                 </h3>
             </div>
 
             <div className="space-y-3">
-                {guests.map(guest => {
+                {guests?.map(guest => {
                     const progress = getProgressPercentage(guest.milestones);
-                    const daysSinceContact = getDaysSinceContact(guest.lastContact);
+                    const daysSinceContact = getDaysSinceContact(guest?.lastContact as any);
 
                     return (
                         <Card
-                            key={guest.id}
+                            key={guest._id}
                             className="cursor-move hover:shadow-md transition-shadow bg-white"
                             draggable
-                            onDragStart={e => handleDragStart(e, guest.id)}
+                            onDragStart={e => handleDragStart(e, guest._id)}
                         >
                             <CardContent className="p-3">
                                 <div className="flex items-start justify-between mb-2">
@@ -253,7 +137,7 @@ function KanbanColumn({ title, stage, guests, onGuestMove, onViewGuest }: Kanban
                                             </button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => onViewGuest(guest.id)}>
+                                            <DropdownMenuItem onClick={() => onViewGuest(guest._id)}>
                                                 View Profile
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -322,7 +206,7 @@ function KanbanColumn({ title, stage, guests, onGuestMove, onViewGuest }: Kanban
                     );
                 })}
 
-                {guests.length === 0 && (
+                {guests?.length === 0 && (
                     <div className="text-center py-8 text-gray-400">
                         <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
                         <p className="text-sm">No guests in this stage</p>
@@ -336,39 +220,42 @@ function KanbanColumn({ title, stage, guests, onGuestMove, onViewGuest }: Kanban
 export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboardProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
-    const [stageFilter, setStageFilter] = useState<Guest['stage'] | 'all'>('all');
-    const [guests, setGuests] = useState<Guest[]>(mockGuests);
+    const [stageFilter, setStageFilter] = useState<Guest['assimilationStage'] | 'all'>('all');
+
+    const { data: guests } = useGetGuestsQuery({ workerId: currentUser._id, zoneId: '' });
 
     // Filter guests by current user and search term
-    const userGuests = guests.filter(
-        guest => guest.assignedWorker === currentUser.id && guest.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const userGuests = useMemo(
+        () => guests?.filter(guest => guest.name.toLowerCase().includes(searchTerm.toLowerCase())),
+        [guests, searchTerm]
     );
 
     // Categorize guests by stage
     const categorizedGuests = {
         all: userGuests,
-        invited: userGuests.filter(guest => guest.stage === 'invited'),
-        attended: userGuests.filter(guest => guest.stage === 'attended'),
-        discipled: userGuests.filter(guest => guest.stage === 'discipled'),
-        joined: userGuests.filter(guest => guest.stage === 'joined'),
+        invited: userGuests?.filter(guest => guest.assimilationStage === AssimilationStage.INVITED),
+        attended: userGuests?.filter(guest => guest.assimilationStage === AssimilationStage.ATTENDED),
+        discipled: userGuests?.filter(guest => guest.assimilationStage === AssimilationStage.DISCIPLED),
+        joined: userGuests?.filter(guest => guest.assimilationStage === AssimilationStage.JOINED),
     };
 
     // Group guests by stage for Kanban view
     const guestsByStage = {
-        invited: userGuests.filter(g => g.stage === 'invited'),
-        attended: userGuests.filter(g => g.stage === 'attended'),
-        discipled: userGuests.filter(g => g.stage === 'discipled'),
-        joined: userGuests.filter(g => g.stage === 'joined'),
+        invited: userGuests?.filter(g => g.assimilationStage === 'invited'),
+        attended: userGuests?.filter(g => g.assimilationStage === 'attended'),
+        discipled: userGuests?.filter(g => g.assimilationStage === 'discipled'),
+        joined: userGuests?.filter(g => g.assimilationStage === 'joined'),
     };
 
-    const handleGuestMove = (guestId: string, newStage: Guest['stage']) => {
-        setGuests(prev =>
-            prev.map(guest => (guest.id === guestId ? { ...guest, stage: newStage, lastContact: new Date() } : guest))
-        );
+    const handleGuestMove = (guestId: string, newStage: Guest['assimilationStage']) => {
+        // TODO: Update guest stage in backend
+        // setGuests(prev =>
+        //     prev.map(guest => (guest._id === guestId ? { ...guest, stage: newStage, lastContact: new Date() } : guest))
+        // );
         toast.success(`Guest moved to ${newStage} stage`);
     };
 
-    const getStageColor = (stage: Guest['stage']) => {
+    const getStageColor = (stage: Guest['assimilationStage']) => {
         switch (stage) {
             case 'invited':
                 return 'bg-blue-100 text-blue-800';
@@ -383,7 +270,7 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
         }
     };
 
-    const getStageText = (stage: Guest['stage']) => {
+    const getStageText = (stage: Guest['assimilationStage']) => {
         switch (stage) {
             case 'invited':
                 return 'Invited';
@@ -397,13 +284,13 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
     };
 
     const getProgressPercentage = (milestones: Guest['milestones']) => {
-        const completed = milestones.filter(m => m.completed).length;
+        const completed = milestones.filter(m => m.status === MilestoneStatus.COMPLETED).length;
         return Math.round((completed / milestones.length) * 100);
     };
 
     const getDaysSinceContact = (lastContact: Date) => {
         const today = new Date();
-        const diffTime = today.getTime() - lastContact.getTime();
+        const diffTime = today.getTime() - lastContact?.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return diffDays;
     };
@@ -438,7 +325,7 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
                                     const daysSinceContact = getDaysSinceContact(guest.lastContact);
 
                                     return (
-                                        <TableRow key={guest.id}>
+                                        <TableRow key={guest._id}>
                                             <TableCell>
                                                 <div className="flex items-center space-x-3">
                                                     <Avatar className="w-8 h-8">
@@ -487,15 +374,18 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
                                             </TableCell>
                                             <TableCell>
                                                 <Select
-                                                    value={guest.stage}
+                                                    value={guest.assimilationStage}
                                                     onValueChange={newStage =>
-                                                        handleGuestMove(guest.id, newStage as Guest['stage'])
+                                                        handleGuestMove(
+                                                            guest._id,
+                                                            newStage as Guest['assimilationStage']
+                                                        )
                                                     }
                                                 >
                                                     <SelectTrigger className="w-32">
                                                         <SelectValue>
-                                                            <Badge className={getStageColor(guest.stage)}>
-                                                                {getStageText(guest.stage)}
+                                                            <Badge className={getStageColor(guest.assimilationStage)}>
+                                                                {getStageText(guest.assimilationStage)}
                                                             </Badge>
                                                         </SelectValue>
                                                     </SelectTrigger>
@@ -560,7 +450,7 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
                                                         </button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => onViewGuest(guest.id)}>
+                                                        <DropdownMenuItem onClick={() => onViewGuest(guest._id)}>
                                                             View Profile
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
@@ -592,7 +482,7 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
                 {viewMode == 'list' && (
                     <Select
                         value={stageFilter}
-                        onValueChange={value => setStageFilter(value as Guest['stage'] | 'all')}
+                        onValueChange={value => setStageFilter(value as Guest['assimilationStage'] | 'all')}
                     >
                         <SelectTrigger className="w-min">
                             <SelectValue placeholder="Filter by stage" />
@@ -628,7 +518,7 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
         let filtered = userGuests;
 
         if (searchTerm) {
-            filtered = filtered.filter(
+            filtered = filtered?.filter(
                 guest =>
                     guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     guest.phone.includes(searchTerm) ||
@@ -637,7 +527,7 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
         }
 
         if (stageFilter !== 'all') {
-            filtered = filtered.filter(guest => guest.stage === stageFilter);
+            filtered = filtered?.filter(guest => guest.assimilationStage === stageFilter);
         }
 
         return filtered;
@@ -653,27 +543,29 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
                 <div className="grid grid-cols-4 gap-4">
                     <Card className="text-center">
                         <CardContent className="p-4">
-                            <div className="text-2xl font-bold text-blue-600">{categorizedGuests.invited.length}</div>
+                            <div className="text-2xl font-bold text-blue-600">{categorizedGuests?.invited?.length}</div>
                             <div className="text-sm text-gray-600">Invited</div>
                         </CardContent>
                     </Card>
                     <Card className="text-center">
                         <CardContent className="p-4">
-                            <div className="text-2xl font-bold text-green-600">{categorizedGuests.attended.length}</div>
+                            <div className="text-2xl font-bold text-green-600">
+                                {categorizedGuests?.attended?.length}
+                            </div>
                             <div className="text-sm text-gray-600">Attended</div>
                         </CardContent>
                     </Card>
                     <Card className="text-center">
                         <CardContent className="p-4">
                             <div className="text-2xl font-bold text-purple-600">
-                                {categorizedGuests.discipled.length}
+                                {categorizedGuests?.discipled?.length}
                             </div>
                             <div className="text-sm text-gray-600">Discipled</div>
                         </CardContent>
                     </Card>
                     <Card className="text-center">
                         <CardContent className="p-4">
-                            <div className="text-2xl font-bold text-gray-600">{categorizedGuests.joined.length}</div>
+                            <div className="text-2xl font-bold text-gray-600">{categorizedGuests?.joined?.length}</div>
                             <div className="text-sm text-gray-600">Joined</div>
                         </CardContent>
                     </Card>
@@ -687,28 +579,28 @@ export function MyGuestsDashboard({ currentUser, onViewGuest }: MyGuestsDashboar
                 <div className="flex space-x-4 overflow-x-auto">
                     <KanbanColumn
                         title="Invited"
-                        stage="invited"
+                        stage={AssimilationStage.INVITED}
                         guests={guestsByStage.invited}
                         onGuestMove={handleGuestMove}
                         onViewGuest={onViewGuest}
                     />
                     <KanbanColumn
                         title="Attended"
-                        stage="attended"
+                        stage={AssimilationStage.ATTENDED}
                         guests={guestsByStage.attended}
                         onGuestMove={handleGuestMove}
                         onViewGuest={onViewGuest}
                     />
                     <KanbanColumn
                         title="Discipled"
-                        stage="discipled"
+                        stage={AssimilationStage.DISCIPLED}
                         guests={guestsByStage.discipled}
                         onGuestMove={handleGuestMove}
                         onViewGuest={onViewGuest}
                     />
                     <KanbanColumn
                         title="Joined Workforce"
-                        stage="joined"
+                        stage={AssimilationStage.JOINED}
                         guests={guestsByStage.joined}
                         onGuestMove={handleGuestMove}
                         onViewGuest={onViewGuest}

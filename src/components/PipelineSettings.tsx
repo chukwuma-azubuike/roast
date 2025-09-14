@@ -20,7 +20,7 @@ import {
     AlertDialogTrigger,
 } from './ui/alert-dialog';
 import { toast } from 'sonner';
-import type { User } from '../App';
+import { User } from '../store/types';
 
 interface PipelineSettingsProps {
     currentUser: User;

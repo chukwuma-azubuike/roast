@@ -6,10 +6,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Avatar, AvatarFallback } from './ui/avatar';
-import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { toast } from 'sonner';
-import type { User, Guest } from '../App';
+import { User, Role, Guest } from '../store/types';
 
 interface GuestReassignmentDialogProps {
     guest: Guest;
@@ -96,7 +95,7 @@ const mockZones = [
 
 export function GuestReassignmentDialog({ guest, currentUser, onReassign, children }: GuestReassignmentDialogProps) {
     const [open, setOpen] = useState(false);
-    const [selectedZone, setSelectedZone] = useState<string>(guest.zone);
+    const [selectedZone, setSelectedZone] = useState<string>(guest.zoneId);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedWorker, setSelectedWorker] = useState<string>('');
 
@@ -105,11 +104,11 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
         let workers = mockAllWorkers;
 
         // Coordinators can only reassign within their zone
-        if (currentUser.role === 'coordinator') {
-            workers = workers.filter(worker => worker.zone === currentUser.zone);
+        if (currentUser.role === Role.ZONAL_COORDINATOR) {
+            workers = workers.filter(worker => worker.zone === currentUser.zoneIds?.[0]);
         }
         // Admins and pastors can reassign to any zone
-        else if (currentUser.role === 'admin' || currentUser.role === 'pastor') {
+        else if (currentUser.role === Role.ADMIN || currentUser.role === Role.PASTOR) {
             if (selectedZone) {
                 workers = workers.filter(worker => worker.zone === selectedZone);
             }
@@ -124,11 +123,11 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
             );
         }
 
-        return workers.filter(worker => worker.id !== guest.assignedWorker);
+        return workers.filter(worker => worker.id !== guest.assignedToId);
     };
 
     const availableWorkers = getAvailableWorkers();
-    const currentAssignedWorker = mockAllWorkers.find(w => w.id === guest.assignedWorker);
+    const currentAssignedWorker = mockAllWorkers.find(w => w.id === guest.assignedToId);
 
     const handleReassign = () => {
         if (!selectedWorker) {
@@ -137,9 +136,9 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
         }
 
         const newWorker = mockAllWorkers.find(w => w.id === selectedWorker);
-        const newZone = selectedZone !== guest.zone ? selectedZone : undefined;
+        const newZone = selectedZone !== guest.zoneId ? selectedZone : undefined;
 
-        onReassign(guest.id, selectedWorker, newZone);
+        onReassign(guest._id, selectedWorker, newZone);
 
         toast.success(
             `Guest reassigned to ${newWorker?.name}${
@@ -197,7 +196,7 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
                     </div>
 
                     {/* Zone Selection (Admin/Pastor only) */}
-                    {(currentUser.role === 'admin' || currentUser.role === 'pastor') && (
+                    {(currentUser.role === Role.ADMIN || currentUser.role === Role.PASTOR) && (
                         <div>
                             <Label className="text-sm font-medium">Target Zone</Label>
                             <Select value={selectedZone} onValueChange={setSelectedZone}>
@@ -279,8 +278,8 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
                                                         {worker.guestCount <= 5
                                                             ? 'Light'
                                                             : worker.guestCount <= 10
-                                                              ? 'Moderate'
-                                                              : 'Heavy'}{' '}
+                                                            ? 'Moderate'
+                                                            : 'Heavy'}{' '}
                                                         workload
                                                     </div>
                                                 </div>
@@ -304,7 +303,7 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
 
                     {/* Permission Notice */}
                     <div className="text-xs text-gray-500 text-center p-3 bg-gray-50 rounded">
-                        {currentUser.role === 'coordinator'
+                        {currentUser.role === Role.ZONAL_COORDINATOR
                             ? 'As a coordinator, you can only reassign guests within your zone'
                             : 'As an admin, you can reassign guests to any worker in any zone'}
                     </div>

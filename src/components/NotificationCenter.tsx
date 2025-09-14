@@ -7,101 +7,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { toast } from 'sonner';
-import type { User } from '../App';
+import { User, Role, NotificationProps, NotificationType, NotificationPriority } from '../store/types';
+
+interface NotificationSettings {
+    followUpReminders: boolean;
+    milestoneUpdates: boolean;
+    stagnantGuestAlerts: boolean;
+    newAssignments: boolean;
+    weeklyReports: boolean;
+    welcomeMessages: boolean;
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    smsNotifications: boolean;
+}
+import { useGetNotificationsQuery, useMarkNotificationAsReadMutation } from '../store/api';
 
 interface NotificationCenterProps {
     currentUser: User;
 }
 
-interface Notification {
-    id: string;
-    type: 'follow_up' | 'stagnant' | 'milestone' | 'welcome' | 'reminder' | 'assignment';
-    title: string;
-    message: string;
-    guestName?: string;
-    guestId?: string;
-    createdAt: Date;
-    isRead: boolean;
-    priority: 'low' | 'medium' | 'high';
-    actionRequired: boolean;
-}
-
-// Mock notifications data
-const mockNotifications: Notification[] = [
-    {
-        id: 'n1',
-        type: 'follow_up',
-        title: 'Follow-up Due',
-        message: "Sarah Johnson needs a follow-up call - it's been 2 days since last contact",
-        guestName: 'Sarah Johnson',
-        guestId: 'guest1',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        isRead: false,
-        priority: 'high',
-        actionRequired: true,
-    },
-    {
-        id: 'n2',
-        type: 'milestone',
-        title: 'Milestone Completed',
-        message: 'Mike Chen completed "First Visit" milestone',
-        guestName: 'Mike Chen',
-        guestId: 'guest2',
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        isRead: false,
-        priority: 'medium',
-        actionRequired: false,
-    },
-    {
-        id: 'n3',
-        type: 'stagnant',
-        title: 'Guest Needs Attention',
-        message: "Emily Rodriguez hasn't had contact in 7 days and may be losing interest",
-        guestName: 'Emily Rodriguez',
-        guestId: 'guest3',
-        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-        isRead: true,
-        priority: 'high',
-        actionRequired: true,
-    },
-    {
-        id: 'n4',
-        type: 'assignment',
-        title: 'New Guest Assigned',
-        message: 'Lisa Zhang has been assigned to you for follow-up',
-        guestName: 'Lisa Zhang',
-        guestId: 'guest5',
-        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-        isRead: true,
-        priority: 'medium',
-        actionRequired: true,
-    },
-    {
-        id: 'n5',
-        type: 'reminder',
-        title: 'Weekly Report Due',
-        message: 'Your weekly guest activity report is due tomorrow',
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-        isRead: true,
-        priority: 'low',
-        actionRequired: true,
-    },
-    {
-        id: 'n6',
-        type: 'welcome',
-        title: 'Welcome Message Sent',
-        message: 'Welcome message sent to David Kim via WhatsApp',
-        guestName: 'David Kim',
-        guestId: 'guest4',
-        createdAt: new Date(Date.now() - 36 * 60 * 60 * 1000), // 1.5 days ago
-        isRead: true,
-        priority: 'low',
-        actionRequired: false,
-    },
-];
-
-// Mock notification settings
-const notificationSettings = {
+// Notification settings
+const defaultNotificationSettings: NotificationSettings = {
     followUpReminders: true,
     milestoneUpdates: true,
     stagnantGuestAlerts: true,
@@ -114,19 +40,32 @@ const notificationSettings = {
 };
 
 export function NotificationCenter({ currentUser }: NotificationCenterProps) {
-    const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-    const [settings, setSettings] = useState(notificationSettings);
+    const [settings, setSettings] = useState(defaultNotificationSettings);
     const [activeTab, setActiveTab] = useState('all');
+    const { data: notifications = [], isLoading, error } = useGetNotificationsQuery();
+    const [markNotificationRead] = useMarkNotificationAsReadMutation();
 
     // Filter notifications based on user role
-    const userNotifications = notifications.filter(notification => {
-        if (currentUser.role === 'worker') {
-            return ['follow_up', 'milestone', 'assignment', 'reminder', 'welcome'].includes(notification.type);
-        } else if (currentUser.role === 'coordinator') {
-            return ['stagnant', 'milestone', 'assignment', 'reminder'].includes(notification.type);
-        }
-        return true; // Admin/Pastor see all
-    });
+    const userNotifications =
+        notifications?.filter(notification => {
+            if (currentUser.role === Role.WORKER) {
+                return [
+                    NotificationType.FOLLOW_UP,
+                    NotificationType.MILESTONE,
+                    NotificationType.ASSIGNMENT,
+                    NotificationType.REMINDER,
+                    NotificationType.WELCOME,
+                ].includes(notification.type);
+            } else if (currentUser.role === Role.ZONAL_COORDINATOR) {
+                return [
+                    NotificationType.STAGNANT,
+                    NotificationType.MILESTONE,
+                    NotificationType.ASSIGNMENT,
+                    NotificationType.REMINDER,
+                ].includes(notification.type);
+            }
+            return true; // Admin/Pastor see all
+        }) ?? [];
 
     // Categorize notifications
     const categorizedNotifications = {
@@ -140,59 +79,73 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
         }),
     };
 
-    const getNotificationIcon = (type: string) => {
+    const getNotificationIcon = (type: NotificationType) => {
         switch (type) {
-            case 'follow_up':
+            case NotificationType.FOLLOW_UP:
                 return <Phone className="w-5 h-5" />;
-            case 'stagnant':
+            case NotificationType.STAGNANT:
                 return <AlertTriangle className="w-5 h-5" />;
-            case 'milestone':
+            case NotificationType.MILESTONE:
                 return <CheckCircle className="w-5 h-5" />;
-            case 'welcome':
+            case NotificationType.WELCOME:
                 return <MessageSquare className="w-5 h-5" />;
-            case 'reminder':
+            case NotificationType.REMINDER:
                 return <Clock className="w-5 h-5" />;
-            case 'assignment':
+            case NotificationType.ASSIGNMENT:
                 return <UserIcon className="w-5 h-5" />;
             default:
                 return <Info className="w-5 h-5" />;
         }
     };
 
-    const getNotificationColor = (type: string, priority: string) => {
-        if (priority === 'high') return 'bg-red-100 text-red-600 border-red-200';
-        if (priority === 'medium') return 'bg-yellow-100 text-yellow-600 border-yellow-200';
+    const getNotificationColor = (type: NotificationType, priority: NotificationPriority) => {
+        if (priority === NotificationPriority.HIGH) return 'bg-red-100 text-red-600 border-red-200';
+        if (priority === NotificationPriority.MEDIUM) return 'bg-yellow-100 text-yellow-600 border-yellow-200';
 
         switch (type) {
-            case 'follow_up':
+            case NotificationType.FOLLOW_UP:
                 return 'bg-blue-100 text-blue-600 border-blue-200';
-            case 'stagnant':
+            case NotificationType.STAGNANT:
                 return 'bg-red-100 text-red-600 border-red-200';
-            case 'milestone':
+            case NotificationType.MILESTONE:
                 return 'bg-green-100 text-green-600 border-green-200';
-            case 'welcome':
+            case NotificationType.WELCOME:
                 return 'bg-purple-100 text-purple-600 border-purple-200';
-            case 'reminder':
+            case NotificationType.REMINDER:
                 return 'bg-orange-100 text-orange-600 border-orange-200';
-            case 'assignment':
+            case NotificationType.ASSIGNMENT:
                 return 'bg-indigo-100 text-indigo-600 border-indigo-200';
             default:
                 return 'bg-gray-100 text-gray-600 border-gray-200';
         }
     };
 
-    const markAsRead = (notificationId: string) => {
-        setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, isRead: true } : n)));
+    const markAsRead = async (notificationId: string) => {
+        try {
+            await markNotificationRead(notificationId).unwrap();
+            toast.success('Notification marked as read');
+        } catch (error) {
+            toast.error('Failed to mark notification as read');
+        }
     };
 
-    const dismissNotification = (notificationId: string) => {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-        toast.success('Notification dismissed');
+    const dismissNotification = async (notificationId: string) => {
+        try {
+            // We should have a dismiss mutation, but for now we'll mark as read
+            await markNotificationRead(notificationId).unwrap();
+            toast.success('Notification dismissed');
+        } catch (error) {
+            toast.error('Failed to dismiss notification');
+        }
     };
 
-    const markAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-        toast.success('All notifications marked as read');
+    const markAllAsRead = async () => {
+        try {
+            await Promise.all(userNotifications.filter(n => !n.isRead).map(n => markNotificationRead(n._id).unwrap()));
+            toast.success('All notifications marked as read');
+        } catch (error) {
+            toast.error('Failed to mark all as read');
+        }
     };
 
     const formatTime = (date: Date) => {
@@ -207,7 +160,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
         return date.toLocaleDateString();
     };
 
-    const NotificationCard = ({ notification }: { notification: Notification }) => {
+    const NotificationCard = ({ notification }: { notification: NotificationProps }) => {
         const icon = getNotificationIcon(notification.type);
         const colorClass = getNotificationColor(notification.type, notification.priority);
 
@@ -227,7 +180,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                             <div className="flex items-start justify-between mb-1">
                                 <h3 className="font-medium text-sm">{notification.title}</h3>
                                 <div className="flex items-center space-x-2">
-                                    {notification.priority === 'high' && (
+                                    {notification.priority === NotificationPriority.HIGH && (
                                         <Badge variant="destructive" className="text-xs">
                                             High
                                         </Badge>
@@ -241,7 +194,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                                         variant="ghost"
                                         size="sm"
                                         className="h-6 w-6 p-0"
-                                        onClick={() => dismissNotification(notification.id)}
+                                        onClick={() => dismissNotification(notification._id)}
                                     >
                                         <X className="w-3 h-3" />
                                     </Button>
@@ -251,11 +204,13 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                             <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
 
                             <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-500">{formatTime(notification.createdAt)}</span>
+                                <span className="text-xs text-gray-500">
+                                    {formatTime(new Date(notification.createdAt))}
+                                </span>
 
                                 {notification.actionRequired && (
                                     <div className="flex space-x-2">
-                                        {notification.type === 'follow_up' && notification.guestId && (
+                                        {notification.type === NotificationType.FOLLOW_UP && notification.guestId && (
                                             <>
                                                 <Button size="sm" variant="outline" className="h-7 text-xs">
                                                     <Phone className="w-3 h-3 mr-1" />
@@ -266,12 +221,12 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                                                 </Button>
                                             </>
                                         )}
-                                        {notification.type === 'assignment' && (
+                                        {notification.type === NotificationType.ASSIGNMENT && (
                                             <Button size="sm" variant="outline" className="h-7 text-xs">
                                                 Accept
                                             </Button>
                                         )}
-                                        {notification.type === 'reminder' && (
+                                        {notification.type === NotificationType.REMINDER && (
                                             <Button size="sm" variant="outline" className="h-7 text-xs">
                                                 Complete
                                             </Button>
@@ -288,7 +243,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 text-xs"
-                                onClick={() => markAsRead(notification.id)}
+                                onClick={() => markAsRead(notification._id)}
                             >
                                 Mark as read
                             </Button>
@@ -301,6 +256,28 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
 
     const unreadCount = categorizedNotifications.unread.length;
     const actionRequiredCount = categorizedNotifications.actionRequired.length;
+
+    if (isLoading) {
+        return (
+            <div className="p-4 max-w-4xl mx-auto">
+                <div className="animate-pulse space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                        <Card key={i}>
+                            <CardContent className="p-4">
+                                <div className="flex items-start space-x-3">
+                                    <div className="w-10 h-10 rounded-lg bg-gray-200" />
+                                    <div className="flex-1">
+                                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 max-w-4xl mx-auto">
@@ -337,7 +314,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                         </Card>
                     ) : (
                         categorizedNotifications.all.map(notification => (
-                            <NotificationCard key={notification.id} notification={notification} />
+                            <NotificationCard key={notification._id} notification={notification} />
                         ))
                     )}
                 </TabsContent>
@@ -353,7 +330,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                         </Card>
                     ) : (
                         categorizedNotifications.unread.map(notification => (
-                            <NotificationCard key={notification.id} notification={notification} />
+                            <NotificationCard key={notification._id} notification={notification} />
                         ))
                     )}
                 </TabsContent>
@@ -369,7 +346,7 @@ export function NotificationCenter({ currentUser }: NotificationCenterProps) {
                         </Card>
                     ) : (
                         categorizedNotifications.actionRequired.map(notification => (
-                            <NotificationCard key={notification.id} notification={notification} />
+                            <NotificationCard key={notification._id} notification={notification} />
                         ))
                     )}
                 </TabsContent>

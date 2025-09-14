@@ -8,7 +8,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
-import type { User } from '../App';
+import { User } from '../store/types';
 
 interface GuestCaptureFormProps {
     currentUser: User;
@@ -21,7 +21,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
         phone: '',
         address: '',
         prayerRequest: '',
-        zone: currentUser.zone || '',
+        zoneIds: currentUser.zoneIds || '',
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +74,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                 const newGuest = {
                     ...formData,
                     id: `offline_${Date.now()}`,
-                    assignedWorker: currentUser.id,
+                    assignedWorker: currentUser._id,
                     createdAt: new Date().toISOString(),
                     synced: false,
                 };
@@ -91,7 +91,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                 phone: '',
                 address: '',
                 prayerRequest: '',
-                zone: currentUser.zone || '',
+                zoneIds: currentUser.zoneIds || '',
             });
 
             onGuestCaptured();
@@ -160,7 +160,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                                 <MapPin className="w-4 h-4" />
                                 <span>Zone</span>
                             </Label>
-                            <Select value={formData.zone} onValueChange={value => handleInputChange('zone', value)}>
+                            <Select value={formData.zoneIds} onValueChange={value => handleInputChange('zone', value)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select zone" />
                                 </SelectTrigger>
@@ -172,9 +172,10 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {currentUser.zone && (
+                            {currentUser.zoneIds && currentUser?.zoneIds?.length > 0 && (
                                 <p className="text-xs text-gray-500">
-                                    Auto-assigned to your zone: {zones.find(z => z.id === currentUser.zone)?.name}
+                                    Auto-assigned to your zone:{' '}
+                                    {zones.find(z => z.id === (currentUser?.zoneIds as string[])[0])?.name}
                                 </p>
                             )}
                         </div>
