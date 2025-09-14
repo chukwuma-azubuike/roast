@@ -81,6 +81,7 @@ export interface Guest {
     phone: string;
     zoneId: ID;
     assignedToId?: ID | null;
+    campusId?: ID;
     createdById?: ID;
     createdAt: string | Date; // ISO string format
     lastContact?: string | Date; // ISO string format

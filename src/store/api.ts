@@ -551,9 +551,10 @@ export const crmApi = createApi({
 
     endpoints: builder => ({
         // Guest Queries
-        getGuests: builder.query<Guest[], { workerId?: string; zoneId?: string }>({
+        getGuests: builder.query<Guest[], { campusId?: string; workerId?: string; zoneId?: string }>({
             query: params => ({
                 url: '/',
+                // url: '/guests',
                 method: 'GET',
                 params,
             }),
@@ -570,7 +571,11 @@ export const crmApi = createApi({
         }),
 
         getGuestById: builder.query<Guest, string>({
-            query: _id => `/guests/${_id}`,
+            query: _id => ({
+                url: '/',
+                // url: `/guests/${_id}`
+                method: 'GET',
+            }),
             transformResponse(_res: any, _meta, arg) {
                 return mockGuests.find(g => g._id === arg) ?? mockGuests[0];
             },
@@ -579,7 +584,8 @@ export const crmApi = createApi({
 
         createGuest: builder.mutation<Guest, GuestFormData>({
             query: guest => ({
-                url: '/guests',
+                url: '/',
+                // url: '/guests',
                 method: 'POST',
                 body: guest,
             }),
@@ -606,7 +612,8 @@ export const crmApi = createApi({
 
         updateGuest: builder.mutation<Guest, Partial<Guest> & { _id: string }>({
             query: ({ _id, ...patch }) => ({
-                url: `/guests/${_id}`,
+                url: '/',
+                // url: `/guests/${_id}`,
                 method: 'PATCH',
                 body: patch,
             }),
@@ -629,7 +636,8 @@ export const crmApi = createApi({
         getZones: builder.query<Zone[], void>({
             query: () => ({
                 url: '/',
-                // url: '/zones'
+                // url: '/zones',
+                method: 'GET',
             }),
             transformResponse() {
                 return mockZones;
@@ -659,7 +667,11 @@ export const crmApi = createApi({
 
         // Engagement Queries
         getEngagementsForGuest: builder.query<Engagement[], string>({
-            query: guestId => `/guests/${guestId}/engagements`,
+            query: guestId => ({
+                url: '/',
+                // url: `/guests/${guestId}/engagements`,
+                method: 'GET',
+            }),
             transformResponse(_res: any, _meta, guestId) {
                 if (!mockEngagements[guestId]) {
                     mockEngagements[guestId] = [
@@ -715,8 +727,12 @@ export const crmApi = createApi({
 
         // Notification Queries
         getNotifications: builder.query<NotificationProps[], void>({
-            // query: () => '/notifications',
-            query: () => '/',
+            query: () => ({
+                url: '/',
+                // url: '/notifications',
+                method: 'GET',
+            }),
+
             transformResponse() {
                 return mockNotifications;
             },
@@ -745,7 +761,11 @@ export const crmApi = createApi({
 
         // Current User Query
         getCurrentUser: builder.query<User, void>({
-            query: () => '/me',
+            query: () => ({
+                url: '/',
+                // url: '/me'
+                method: 'GET',
+            }),
             transformResponse() {
                 return mockCurrentUser;
             },
@@ -758,6 +778,7 @@ export const crmApi = createApi({
                 url: '/',
                 // url: '/leaderboard/workers',
                 params: { period },
+                method: 'GET',
             }),
             transformResponse() {
                 return mockLeaderBoard;
@@ -770,6 +791,7 @@ export const crmApi = createApi({
                 url: '/',
                 // url: '/leaderboard/zones',
                 params: { period },
+                method: 'GET',
             }),
             transformResponse() {
                 return mockZoneLeaderboard;
@@ -781,6 +803,7 @@ export const crmApi = createApi({
             query: () => ({
                 url: '/',
                 // url: '/achievements',
+                method: 'GET',
             }),
             transformResponse() {
                 return mockCurrentUserAchievements;
@@ -793,6 +816,7 @@ export const crmApi = createApi({
             query: () => ({
                 url: '/',
                 // url: '/pipeline/stages',
+                method: 'GET',
             }),
             transformResponse() {
                 return mockPipelineStages;
@@ -804,6 +828,7 @@ export const crmApi = createApi({
             query: () => ({
                 url: '/',
                 // url: '/pipeline/notification-rules',
+                method: 'GET',
             }),
             transformResponse() {
                 return [

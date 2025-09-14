@@ -21,7 +21,12 @@ import { Progress } from './ui/progress';
 import { Checkbox } from './ui/checkbox';
 import { toast } from 'sonner';
 import { Guest, MilestoneStatus, AssimilationStage, Timeline, ContactChannel } from '../store/types';
-import { useGetGuestByIdQuery, useUpdateGuestMutation, useGetEngagementsForGuestQuery, useAddEngagementMutation } from '../store/api';
+import {
+    useGetGuestByIdQuery,
+    useUpdateGuestMutation,
+    useGetEngagementsForGuestQuery,
+    useAddEngagementMutation,
+} from '../store/api';
 
 interface GuestProfileProps {
     guestId: string | null;
@@ -35,18 +40,6 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
     const [addEngagement] = useAddEngagementMutation();
     const [newNote, setNewNote] = useState('');
     const [isAddingNote, setIsAddingNote] = useState(false);
-
-    if (!guestId || !guest || isLoading) {
-        return (
-            <div className="p-4 text-center">
-                <p>{isLoading ? 'Loading...' : 'Guest not found'}</p>
-                <Button onClick={onBack} className="mt-4">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                </Button>
-            </div>
-        );
-    }
 
     const getStageColor = (stage: Guest['assimilationStage']) => {
         switch (stage) {
@@ -77,16 +70,19 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                 m._id === milestoneId
                     ? {
                           ...m,
-                          status: m.status === MilestoneStatus.COMPLETED ? MilestoneStatus.PENDING : MilestoneStatus.COMPLETED,
+                          status:
+                              m.status === MilestoneStatus.COMPLETED
+                                  ? MilestoneStatus.PENDING
+                                  : MilestoneStatus.COMPLETED,
                           completedAt: m.status === MilestoneStatus.COMPLETED ? undefined : new Date().toISOString(),
                       }
                     : m
             );
 
-            await updateGuest({ 
-                _id: guest._id, 
+            await updateGuest({
+                _id: guest._id,
                 milestones: updatedMilestones,
-                lastContact: new Date().toISOString()
+                lastContact: new Date().toISOString(),
             });
             toast.success('Milestone updated');
         } catch (error) {
@@ -140,11 +136,42 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
         }
     };
 
+    if (!guestId || !guest || isLoading) {
+        return (
+            <div className="p-4 max-w-2xl mx-auto space-y-6">
+                <div>
+                    <p>{!guest && 'Guest not found'}</p>
+                    <Button onClick={onBack} className="mt-4">
+                        <ArrowLeft className="w-4 h-4" />
+                        Back
+                    </Button>
+                </div>
+                <div className="animate-pulse space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                        <Card key={i}>
+                            <CardContent className="p-4">
+                                <div className="flex items-start space-x-4">
+                                    <div className="w-10 h-10 rounded-lg bg-gray-200" />
+                                    <div className="space-y-4 flex-1">
+                                        <div className="h-5 bg-gray-200 rounded w-3/4" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                        <div className="h-3 bg-gray-200 rounded w-3/4 " />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="p-4 max-w-2xl mx-auto">
+        <div className="p-4 max-w-2xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex items-center mb-6">
-                <Button variant="ghost" size="sm" onClick={onBack}>
+                <Button size="sm" onClick={onBack}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
                 </Button>
@@ -309,9 +336,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                                         {getTimelineIcon(item.type)}
                                     </div>
-                                    {index < engagements.length - 1 && (
-                                        <div className="w-px bg-gray-200 h-8 mt-2" />
-                                    )}
+                                    {index < engagements.length - 1 && <div className="w-px bg-gray-200 h-8 mt-2" />}
                                 </div>
                                 <div className="flex-1 pb-4">
                                     <div className="flex items-center justify-between mb-1">
