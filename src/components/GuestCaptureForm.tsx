@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 import { User } from '../store/types';
+import { useGetZonesQuery } from '../store/api';
 
 interface GuestCaptureFormProps {
     currentUser: User;
@@ -27,14 +28,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-    // Mock zones data
-    const zones = [
-        { id: 'zone1', name: 'Central Zone' },
-        { id: 'zone2', name: 'North Zone' },
-        { id: 'zone3', name: 'South Zone' },
-        { id: 'zone4', name: 'East Zone' },
-        { id: 'zone5', name: 'West Zone' },
-    ];
+    const { data: zones } = useGetZonesQuery();
 
     // Listen for online/offline status
     React.useEffect(() => {
@@ -165,8 +159,8 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                                     <SelectValue placeholder="Select zone" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {zones.map(zone => (
-                                        <SelectItem key={zone.id} value={zone.id}>
+                                    {zones?.map(zone => (
+                                        <SelectItem key={zone._id} value={zone._id}>
                                             {zone.name}
                                         </SelectItem>
                                     ))}
@@ -175,7 +169,7 @@ export function GuestCaptureForm({ currentUser, onGuestCaptured }: GuestCaptureF
                             {currentUser.zoneIds && currentUser?.zoneIds?.length > 0 && (
                                 <p className="text-xs text-gray-500">
                                     Auto-assigned to your zone:{' '}
-                                    {zones.find(z => z.id === (currentUser?.zoneIds as string[])[0])?.name}
+                                    {zones?.find(z => z._id === (currentUser?.zoneIds as string[])[0])?.name}
                                 </p>
                             )}
                         </div>

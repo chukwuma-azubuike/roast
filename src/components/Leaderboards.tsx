@@ -6,207 +6,35 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { User, Role } from '../store/types';
+import { User, Role, TrendDirection, Achievement, WorkerLeaderboardEntry, ZoneLeaderboardEntry } from '../store/types';
+import { useGetWorkerLeaderboardQuery, useGetZoneLeaderboardQuery, useGetAchievementsQuery } from '../store/api';
 
 interface LeaderboardsProps {
     currentUser: User;
 }
 
-// Mock leaderboard data
-const workerLeaderboard = [
-    {
-        id: 'worker1',
-        name: 'John Worker',
-        zone: 'Central',
-        avatar: 'JW',
-        stats: {
-            guestsCaptured: 28,
-            conversions: 8,
-            callsMade: 156,
-            visitsMade: 24,
-            milestoneCompletions: 45,
-            consistency: 95,
-        },
-        badges: ['Top Evangelist', 'Consistent Caller', 'Conversion King'],
-        trend: 'up',
-        points: 2850,
-    },
-    {
-        id: 'worker2',
-        name: 'Mary Helper',
-        zone: 'South',
-        avatar: 'MH',
-        stats: {
-            guestsCaptured: 25,
-            conversions: 7,
-            callsMade: 142,
-            visitsMade: 31,
-            milestoneCompletions: 42,
-            consistency: 88,
-        },
-        badges: ['Visit Champion', 'Faithful Follower'],
-        trend: 'up',
-        points: 2720,
-    },
-    {
-        id: 'worker3',
-        name: 'Paul Evangelist',
-        zone: 'North',
-        avatar: 'PE',
-        stats: {
-            guestsCaptured: 32,
-            conversions: 6,
-            callsMade: 134,
-            visitsMade: 19,
-            milestoneCompletions: 38,
-            consistency: 92,
-        },
-        badges: ['Guest Magnet', 'Street Warrior'],
-        trend: 'stable',
-        points: 2680,
-    },
-    {
-        id: 'worker4',
-        name: 'Sarah Minister',
-        zone: 'East',
-        avatar: 'SM',
-        stats: {
-            guestsCaptured: 22,
-            conversions: 5,
-            callsMade: 118,
-            visitsMade: 16,
-            milestoneCompletions: 35,
-            consistency: 85,
-        },
-        badges: ['Rising Star'],
-        trend: 'up',
-        points: 2420,
-    },
-    {
-        id: 'worker5',
-        name: 'David Pastor',
-        zone: 'West',
-        avatar: 'DP',
-        stats: {
-            guestsCaptured: 19,
-            conversions: 5,
-            callsMade: 95,
-            visitsMade: 22,
-            milestoneCompletions: 32,
-            consistency: 78,
-        },
-        badges: ['Steady Eddie'],
-        trend: 'down',
-        points: 2180,
-    },
-];
-
-const zoneLeaderboard = [
-    {
-        zone: 'South Zone',
-        coordinator: 'Pastor Mike',
-        stats: {
-            totalGuests: 89,
-            conversions: 24,
-            conversionRate: 27,
-            activeWorkers: 6,
-            avgResponseTime: '2.3 hours',
-        },
-        points: 8950,
-        trend: 'up',
-    },
-    {
-        zone: 'Central Zone',
-        coordinator: 'Elder Sarah',
-        stats: {
-            totalGuests: 76,
-            conversions: 19,
-            conversionRate: 25,
-            activeWorkers: 5,
-            avgResponseTime: '1.8 hours',
-        },
-        points: 8200,
-        trend: 'up',
-    },
-    {
-        zone: 'North Zone',
-        coordinator: 'Deacon John',
-        stats: {
-            totalGuests: 68,
-            conversions: 16,
-            conversionRate: 24,
-            activeWorkers: 4,
-            avgResponseTime: '3.1 hours',
-        },
-        points: 7680,
-        trend: 'stable',
-    },
-    {
-        zone: 'East Zone',
-        coordinator: 'Minister Lisa',
-        stats: {
-            totalGuests: 62,
-            conversions: 14,
-            conversionRate: 23,
-            activeWorkers: 4,
-            avgResponseTime: '2.7 hours',
-        },
-        points: 7020,
-        trend: 'down',
-    },
-    {
-        zone: 'West Zone',
-        coordinator: 'Pastor David',
-        stats: {
-            totalGuests: 55,
-            conversions: 12,
-            conversionRate: 22,
-            activeWorkers: 3,
-            avgResponseTime: '4.2 hours',
-        },
-        points: 6240,
-        trend: 'down',
-    },
-];
-
-const achievements = [
-    {
-        id: 'first_guest',
-        title: 'First Guest',
-        description: 'Capture your first guest',
-        icon: Users,
-        rarity: 'common',
-        points: 100,
-    },
-    {
-        id: 'conversion_master',
-        title: 'Conversion Master',
-        description: 'Convert 10 guests to workforce',
-        icon: Trophy,
-        rarity: 'legendary',
-        points: 1000,
-    },
-    {
-        id: 'consistent_caller',
-        title: 'Consistent Caller',
-        description: 'Make calls for 30 days straight',
-        icon: Star,
-        rarity: 'rare',
-        points: 500,
-    },
-    {
-        id: 'visit_champion',
-        title: 'Visit Champion',
-        description: 'Complete 50 home visits',
-        icon: Award,
-        rarity: 'epic',
-        points: 750,
-    },
-];
+const getAchievementIcon = (achievement: Achievement) => {
+    switch (achievement.title) {
+        case 'First Guest':
+            return Users;
+        case 'Conversion Master':
+            return Trophy;
+        case 'Consistent Caller':
+            return Star;
+        case 'Visit Champion':
+            return Award;
+        default:
+            return Trophy;
+    }
+};
 
 export function Leaderboards({ currentUser }: LeaderboardsProps) {
     const [selectedPeriod, setSelectedPeriod] = useState('month');
     const [activeTab, setActiveTab] = useState('workers');
+
+    const { data: workerLeaderboard = [], isLoading: isLoadingWorkers } = useGetWorkerLeaderboardQuery(selectedPeriod);
+    const { data: zoneLeaderboard = [], isLoading: isLoadingZones } = useGetZoneLeaderboardQuery(selectedPeriod);
+    const { data: achievements = [], isLoading: isLoadingAchievements } = useGetAchievementsQuery();
 
     const getBadgeColor = (rarity: string) => {
         switch (rarity) {
@@ -255,6 +83,30 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
     const currentUserPosition = workerLeaderboard.findIndex(worker => worker.id === currentUser._id) + 1;
     const currentUserData = workerLeaderboard.find(worker => worker.id === currentUser._id);
 
+    if (isLoadingWorkers || isLoadingZones || isLoadingAchievements) {
+        return (
+            <div className="p-4 max-w-4xl mx-auto">
+                <div className="animate-pulse space-y-4">
+                    {[...Array(4)].map((_, i) => (
+                        <Card key={i}>
+                            <CardContent className="p-4">
+                                <div className="flex items-start space-x-4">
+                                    <div className="w-10 h-10 rounded-lg bg-gray-200" />
+                                    <div className="space-y-4 flex-1">
+                                        <div className="h-5 bg-gray-200 rounded w-3/4" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                                        <div className="h-3 bg-gray-200 rounded w-3/4 " />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 max-w-4xl mx-auto space-y-6">
             {/* Header */}
@@ -286,8 +138,8 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
                                         {currentUserPosition === 1
                                             ? "You're in the lead!"
                                             : currentUserPosition <= 3
-                                              ? "You're in the top 3!"
-                                              : `Position ${currentUserPosition} of ${workerLeaderboard.length}`}
+                                            ? "You're in the top 3!"
+                                            : `Position ${currentUserPosition} of ${workerLeaderboard.length}`}
                                     </p>
                                 </div>
                             </div>
@@ -449,7 +301,7 @@ export function Leaderboards({ currentUser }: LeaderboardsProps) {
                 <TabsContent value="achievements" className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {achievements.map(achievement => {
-                            const Icon = achievement.icon;
+                            const Icon = getAchievementIcon(achievement);
                             return (
                                 <Card key={achievement.id}>
                                     <CardContent className="p-4">

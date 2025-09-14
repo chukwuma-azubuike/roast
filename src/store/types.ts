@@ -38,6 +38,8 @@ export interface User {
     phone?: string;
     email?: string;
     role: Role;
+    zoneName?: string;
+    guestCount?: number;
     zoneIds?: ID[]; // zones they coordinate
     isActive?: boolean;
 }
@@ -155,3 +157,110 @@ export enum View {
 }
 
 export type ViewType = `${View}`;
+
+// Leaderboard types
+export interface WorkerStats {
+    guestsCaptured: number;
+    conversions: number;
+    callsMade: number;
+    visitsMade: number;
+    milestoneCompletions: number;
+    consistency: number;
+}
+
+export interface WorkerLeaderboardEntry {
+    id: ID;
+    name: string;
+    zone: string;
+    avatar: string;
+    stats: WorkerStats;
+    badges: string[];
+    trend: TrendDirection;
+    points: number;
+}
+
+export interface ZoneStats {
+    totalGuests: number;
+    conversions: number;
+    conversionRate: number;
+    activeWorkers: number;
+    avgResponseTime: string;
+}
+
+export interface ZoneLeaderboardEntry {
+    zone: string;
+    coordinator: string;
+    stats: ZoneStats;
+    points: number;
+    trend: TrendDirection;
+}
+
+export enum AchievementRarity {
+    COMMON = 'common',
+    RARE = 'rare',
+    EPIC = 'epic',
+    LEGENDARY = 'legendary',
+}
+
+export interface Achievement {
+    id: ID;
+    title: string;
+    description: string;
+    rarity: AchievementRarity;
+    points: number;
+    isUnlocked?: boolean;
+    unlockedAt?: string;
+}
+
+// Analytics and Dashboard types
+export enum TrendDirection {
+    UP = 'up',
+    DOWN = 'down',
+    STABLE = 'stable',
+}
+
+export interface ZonePerformance {
+    zone: string;
+    invited: number;
+    attended: number;
+    discipled: number;
+    joined: number;
+    conversion: number;
+}
+
+export interface MonthlyTrend {
+    month: string;
+    newGuests: number;
+    converted: number;
+}
+
+export interface StageDistributionItem {
+    name: string;
+    value: number;
+    color: string;
+}
+
+export interface DropOffAnalysis {
+    stage: string;
+    dropOff: number;
+    reason: string;
+}
+
+export interface TopPerformer {
+    name: string;
+    zone: string;
+    conversions: number;
+    trend: TrendDirection;
+}
+
+export interface GlobalAnalytics {
+    totalGuests: number;
+    conversionRate: number;
+    avgTimeToConversion: number;
+    activeWorkers: number;
+    monthlyTrends: MonthlyTrend[];
+    zonePerformance: ZonePerformance[];
+    stageDistribution: StageDistributionItem[];
+    dropOffAnalysis: DropOffAnalysis[];
+    topPerformers: TopPerformer[];
+}

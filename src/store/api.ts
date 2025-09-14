@@ -12,6 +12,12 @@ import {
     NotificationProps,
     NotificationType,
     NotificationPriority,
+    GlobalAnalytics,
+    TrendDirection,
+    WorkerLeaderboardEntry,
+    ZoneLeaderboardEntry,
+    Achievement,
+    AchievementRarity,
 } from './types';
 import { v4 as uuid } from 'uuid';
 
@@ -90,8 +96,11 @@ const mockGuests: Guest[] = [
 ];
 
 const mockZones: Zone[] = [
-    { _id: 'zone-1', name: 'Surulere' },
-    { _id: 'zone-2', name: 'Ikeja' },
+    { _id: 'zone-1', name: 'Central Zone' },
+    { _id: 'zone-2', name: 'North Zone' },
+    { _id: 'zone-3', name: 'South Zone' },
+    { _id: 'zone-4', name: 'East Zone' },
+    { _id: 'zone-5', name: 'West Zone' },
 ];
 
 const mockUsers: User[] = [
@@ -109,9 +118,19 @@ const mockCurrentUser: User = {
     email: 'john@church.org',
     phone: '+2348012345678',
     role: Role.WORKER,
+    zoneName: 'Central Zone',
+    guestCount: 12,
     isActive: true,
     zoneIds: ['zone-1'],
 };
+
+// Mock analytics data
+const mockStageDistribution = [
+    { name: 'Invited', value: 212, color: '#3B82F6' },
+    { name: 'Attended', value: 148, color: '#10B981' },
+    { name: 'Discipled', value: 85, color: '#8B5CF6' },
+    { name: 'Joined', value: 54, color: '#6B7280' },
+];
 
 // Mock notification data
 const mockNotifications: NotificationProps[] = [
@@ -198,7 +217,17 @@ export const crmApi = createApi({
         },
     }),
 
-    tagTypes: ['Guest', 'GuestList', 'Zone', 'User', 'Engagement', 'Notification', 'CurrentUser'],
+    tagTypes: [
+        'Guest',
+        'GuestList',
+        'Zone',
+        'User',
+        'Engagement',
+        'Notification',
+        'CurrentUser',
+        'Analytics',
+        'Leaderboard',
+    ],
 
     refetchOnReconnect: true,
     refetchOnFocus: true,
@@ -211,7 +240,7 @@ export const crmApi = createApi({
                 method: 'GET',
                 params,
             }),
-            transformResponse(data: Guest[]) {
+            transformResponse() {
                 return mockGuests;
             },
             providesTags: result =>
@@ -281,7 +310,10 @@ export const crmApi = createApi({
 
         // Zone Queries
         getZones: builder.query<Zone[], void>({
-            query: () => '/zones',
+            query: () => ({
+                url: '/',
+                // url: '/zones'
+            }),
             transformResponse() {
                 return mockZones;
             },
@@ -294,7 +326,8 @@ export const crmApi = createApi({
         // User Queries
         getUsers: builder.query<User[], { role?: string; zoneId?: string }>({
             query: params => ({
-                url: '/users',
+                url: '/',
+                // url: '/users',
                 method: 'GET',
                 params,
             }),
@@ -401,6 +434,279 @@ export const crmApi = createApi({
             },
             providesTags: ['CurrentUser'],
         }),
+
+        // Leaderboard Queries
+        getWorkerLeaderboard: builder.query<WorkerLeaderboardEntry[], string>({
+            query: period => ({
+                url: '/',
+                // url: '/leaderboard/workers',
+                params: { period },
+            }),
+            transformResponse() {
+                return [
+                    {
+                        id: 'worker1',
+                        name: 'John Worker',
+                        zone: 'Central',
+                        avatar: 'JW',
+                        stats: {
+                            guestsCaptured: 28,
+                            conversions: 8,
+                            callsMade: 156,
+                            visitsMade: 24,
+                            milestoneCompletions: 45,
+                            consistency: 95,
+                        },
+                        badges: ['Top Evangelist', 'Consistent Caller', 'Conversion King'],
+                        trend: TrendDirection.UP,
+                        points: 2850,
+                    },
+                    {
+                        id: 'worker2',
+                        name: 'Mary Helper',
+                        zone: 'South',
+                        avatar: 'MH',
+                        stats: {
+                            guestsCaptured: 25,
+                            conversions: 7,
+                            callsMade: 142,
+                            visitsMade: 31,
+                            milestoneCompletions: 42,
+                            consistency: 88,
+                        },
+                        badges: ['Visit Champion', 'Faithful Follower'],
+                        trend: TrendDirection.UP,
+                        points: 2720,
+                    },
+                    {
+                        id: 'worker3',
+                        name: 'Paul Evangelist',
+                        zone: 'North',
+                        avatar: 'PE',
+                        stats: {
+                            guestsCaptured: 32,
+                            conversions: 6,
+                            callsMade: 134,
+                            visitsMade: 19,
+                            milestoneCompletions: 38,
+                            consistency: 92,
+                        },
+                        badges: ['Guest Magnet', 'Street Warrior'],
+                        trend: TrendDirection.STABLE,
+                        points: 2680,
+                    },
+                    {
+                        id: 'worker4',
+                        name: 'Sarah Minister',
+                        zone: 'East',
+                        avatar: 'SM',
+                        stats: {
+                            guestsCaptured: 22,
+                            conversions: 5,
+                            callsMade: 118,
+                            visitsMade: 16,
+                            milestoneCompletions: 35,
+                            consistency: 85,
+                        },
+                        badges: ['Rising Star'],
+                        trend: TrendDirection.UP,
+                        points: 2420,
+                    },
+                    {
+                        id: 'worker5',
+                        name: 'David Pastor',
+                        zone: 'West',
+                        avatar: 'DP',
+                        stats: {
+                            guestsCaptured: 19,
+                            conversions: 5,
+                            callsMade: 95,
+                            visitsMade: 22,
+                            milestoneCompletions: 32,
+                            consistency: 78,
+                        },
+                        badges: ['Steady Eddie'],
+                        trend: TrendDirection.DOWN,
+                        points: 2180,
+                    },
+                ];
+            },
+            providesTags: ['Leaderboard'],
+        }),
+
+        getZoneLeaderboard: builder.query<ZoneLeaderboardEntry[], string>({
+            query: period => ({
+                url: '/',
+                // url: '/leaderboard/zones',
+                params: { period },
+            }),
+            transformResponse() {
+                return [
+                    {
+                        zone: 'South Zone',
+                        coordinator: 'Pastor Mike',
+                        stats: {
+                            totalGuests: 89,
+                            conversions: 24,
+                            conversionRate: 27,
+                            activeWorkers: 6,
+                            avgResponseTime: '2.3 hours',
+                        },
+                        points: 8950,
+                        trend: TrendDirection.UP,
+                    },
+                    {
+                        zone: 'Central Zone',
+                        coordinator: 'Elder Sarah',
+                        stats: {
+                            totalGuests: 76,
+                            conversions: 19,
+                            conversionRate: 25,
+                            activeWorkers: 5,
+                            avgResponseTime: '1.8 hours',
+                        },
+                        points: 8200,
+                        trend: TrendDirection.UP,
+                    },
+                    {
+                        zone: 'North Zone',
+                        coordinator: 'Deacon John',
+                        stats: {
+                            totalGuests: 68,
+                            conversions: 16,
+                            conversionRate: 24,
+                            activeWorkers: 4,
+                            avgResponseTime: '3.1 hours',
+                        },
+                        points: 7680,
+                        trend: TrendDirection.STABLE,
+                    },
+                    {
+                        zone: 'East Zone',
+                        coordinator: 'Minister Lisa',
+                        stats: {
+                            totalGuests: 62,
+                            conversions: 14,
+                            conversionRate: 23,
+                            activeWorkers: 4,
+                            avgResponseTime: '2.7 hours',
+                        },
+                        points: 7020,
+                        trend: TrendDirection.DOWN,
+                    },
+                    {
+                        zone: 'West Zone',
+                        coordinator: 'Pastor David',
+                        stats: {
+                            totalGuests: 55,
+                            conversions: 12,
+                            conversionRate: 22,
+                            activeWorkers: 3,
+                            avgResponseTime: '4.2 hours',
+                        },
+                        points: 6240,
+                        trend: TrendDirection.DOWN,
+                    },
+                ];
+            },
+            providesTags: ['Leaderboard'],
+        }),
+
+        getAchievements: builder.query<Achievement[], void>({
+            query: () => ({
+                url: '/',
+                // url: '/achievements',
+            }),
+            transformResponse() {
+                return [
+                    {
+                        id: 'first_guest',
+                        title: 'First Guest',
+                        description: 'Capture your first guest',
+                        rarity: AchievementRarity.COMMON,
+                        points: 100,
+                    },
+                    {
+                        id: 'conversion_master',
+                        title: 'Conversion Master',
+                        description: 'Convert 10 guests to workforce',
+                        rarity: AchievementRarity.LEGENDARY,
+                        points: 1000,
+                    },
+                    {
+                        id: 'consistent_caller',
+                        title: 'Consistent Caller',
+                        description: 'Make calls for 30 days straight',
+                        rarity: AchievementRarity.RARE,
+                        points: 500,
+                    },
+                    {
+                        id: 'visit_champion',
+                        title: 'Visit Champion',
+                        description: 'Complete 50 home visits',
+                        rarity: AchievementRarity.EPIC,
+                        points: 750,
+                    },
+                ];
+            },
+            providesTags: ['Leaderboard'],
+        }),
+
+        // Analytics Queries
+        getGlobalAnalytics: builder.query<GlobalAnalytics, { timeRange: string; zoneId?: string }>({
+            query: params => ({
+                url: '/',
+                // url: '/analytics/global',
+                method: 'GET',
+                params,
+            }),
+            transformResponse() {
+                return {
+                    totalGuests: mockStageDistribution.reduce((sum, stage) => sum + stage.value, 0),
+                    conversionRate: Math.round(
+                        ((mockStageDistribution.find(s => s.name === 'Joined')?.value || 0) /
+                            mockStageDistribution.reduce((sum, stage) => sum + stage.value, 0)) *
+                            100
+                    ),
+                    avgTimeToConversion: 42,
+                    activeWorkers: 25,
+                    monthlyTrends: [
+                        { month: 'Jul', newGuests: 28, converted: 5 },
+                        { month: 'Aug', newGuests: 35, converted: 8 },
+                        { month: 'Sep', newGuests: 42, converted: 12 },
+                        { month: 'Oct', newGuests: 38, converted: 10 },
+                        { month: 'Nov', newGuests: 45, converted: 15 },
+                        { month: 'Dec', newGuests: 52, converted: 18 },
+                    ],
+                    zonePerformance: [
+                        { zone: 'Central', invited: 45, attended: 32, discipled: 18, joined: 12, conversion: 27 },
+                        { zone: 'North', invited: 38, attended: 28, discipled: 15, joined: 8, conversion: 21 },
+                        { zone: 'South', invited: 52, attended: 35, discipled: 22, joined: 15, conversion: 29 },
+                        { zone: 'East', invited: 41, attended: 29, discipled: 16, joined: 10, conversion: 24 },
+                        { zone: 'West', invited: 36, attended: 24, discipled: 14, joined: 9, conversion: 25 },
+                    ],
+                    stageDistribution: [
+                        { name: 'Invited', value: 212, color: '#3B82F6' },
+                        { name: 'Attended', value: 148, color: '#10B981' },
+                        { name: 'Discipled', value: 85, color: '#8B5CF6' },
+                        { name: 'Joined', value: 54, color: '#6B7280' },
+                    ],
+                    dropOffAnalysis: [
+                        { stage: 'Invited → Attended', dropOff: 30, reason: 'No follow-up call' },
+                        { stage: 'Attended → Discipled', dropOff: 43, reason: 'Not invited to small group' },
+                        { stage: 'Discipled → Joined', dropOff: 36, reason: 'Lack of mentorship' },
+                    ],
+                    topPerformers: [
+                        { name: 'John Worker', zone: 'Central', conversions: 8, trend: TrendDirection.UP },
+                        { name: 'Mary Helper', zone: 'South', conversions: 7, trend: TrendDirection.UP },
+                        { name: 'Paul Evangelist', zone: 'North', conversions: 6, trend: TrendDirection.STABLE },
+                        { name: 'Sarah Minister', zone: 'East', conversions: 5, trend: TrendDirection.DOWN },
+                        { name: 'David Pastor', zone: 'West', conversions: 5, trend: TrendDirection.UP },
+                    ],
+                };
+            },
+            providesTags: ['Analytics'],
+        }),
     }),
 });
 
@@ -416,4 +722,8 @@ export const {
     useGetNotificationsQuery,
     useMarkNotificationAsReadMutation,
     useGetCurrentUserQuery,
+    useGetGlobalAnalyticsQuery,
+    useGetWorkerLeaderboardQuery,
+    useGetZoneLeaderboardQuery,
+    useGetAchievementsQuery,
 } = crmApi;

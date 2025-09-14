@@ -17,14 +17,13 @@ import { PipelineSettings } from './components/PipelineSettings';
 import { User, Role, ViewType, View } from './store/types';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
-import { useGetUsersQuery } from './store/api';
 
 // Mock current user - in real app this would come from auth
 const mockCurrentUser: User = {
     _id: 'user1',
     name: 'John Worker',
     role: Role.WORKER,
-    zoneIds: ['zone1'],
+    zoneIds: ['zone-1'],
     email: 'john@church.org',
     isActive: true,
 };
@@ -131,7 +130,7 @@ export default function App() {
         setCurrentUser({
             ...currentUser,
             role,
-            zoneIds: role === Role.ADMIN || role === Role.PASTOR ? [] : ['zone1'],
+            zoneIds: role === Role.ADMIN || role === Role.PASTOR ? [] : ['zone-1'],
         });
         // Reset to appropriate default view for role
         if (role === Role.WORKER) {

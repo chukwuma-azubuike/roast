@@ -17,56 +17,52 @@ import {
     Pie,
     Cell,
 } from 'recharts';
+import { useGetGlobalAnalyticsQuery } from '../store/api';
+import { TrendDirection } from '../store/types';
 
-// Mock data for global analytics
-const zonePerformanceData = [
-    { zone: 'Central', invited: 45, attended: 32, discipled: 18, joined: 12, conversion: 27 },
-    { zone: 'North', invited: 38, attended: 28, discipled: 15, joined: 8, conversion: 21 },
-    { zone: 'South', invited: 52, attended: 35, discipled: 22, joined: 15, conversion: 29 },
-    { zone: 'East', invited: 41, attended: 29, discipled: 16, joined: 10, conversion: 24 },
-    { zone: 'West', invited: 36, attended: 24, discipled: 14, joined: 9, conversion: 25 },
-];
-
-const monthlyTrendsData = [
-    { month: 'Jul', newGuests: 28, converted: 5 },
-    { month: 'Aug', newGuests: 35, converted: 8 },
-    { month: 'Sep', newGuests: 42, converted: 12 },
-    { month: 'Oct', newGuests: 38, converted: 10 },
-    { month: 'Nov', newGuests: 45, converted: 15 },
-    { month: 'Dec', newGuests: 52, converted: 18 },
-];
-
-const stageDistribution = [
-    { name: 'Invited', value: 212, color: '#3B82F6' },
-    { name: 'Attended', value: 148, color: '#10B981' },
-    { name: 'Discipled', value: 85, color: '#8B5CF6' },
-    { name: 'Joined', value: 54, color: '#6B7280' },
-];
-
-const dropOffAnalysis = [
-    { stage: 'Invited → Attended', dropOff: 30, reason: 'No follow-up call' },
-    { stage: 'Attended → Discipled', dropOff: 43, reason: 'Not invited to small group' },
-    { stage: 'Discipled → Joined', dropOff: 36, reason: 'Lack of mentorship' },
-];
-
-const topPerformers = [
-    { name: 'John Worker', zone: 'Central', conversions: 8, trend: 'up' },
-    { name: 'Mary Helper', zone: 'South', conversions: 7, trend: 'up' },
-    { name: 'Paul Evangelist', zone: 'North', conversions: 6, trend: 'stable' },
-    { name: 'Sarah Minister', zone: 'East', conversions: 5, trend: 'down' },
-    { name: 'David Pastor', zone: 'West', conversions: 5, trend: 'up' },
-];
 
 export function GlobalDashboard() {
     const [timeRange, setTimeRange] = useState('6months');
     const [selectedZone, setSelectedZone] = useState('all');
 
-    const totalGuests = stageDistribution.reduce((sum, stage) => sum + stage.value, 0);
-    const conversionRate = Math.round(
-        ((stageDistribution.find(s => s.name === 'Joined')?.value || 0) / totalGuests) * 100
-    );
-    const avgTimeToConversion = 42; // days
-    const activeWorkers = 25;
+    const { data: analytics, isLoading, error } = useGetGlobalAnalyticsQuery({
+        timeRange,
+        zoneId: selectedZone === 'all' ? undefined : selectedZone,
+    });
+
+    if (isLoading) {
+        return (
+            <div className="p-4">
+                <div className="animate-pulse space-y-4">
+                    <div className="h-8 bg-gray-200 rounded w-1/4" />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[...Array(4)].map((_, i) => (
+                            <Card key={i}>
+                                <CardContent className="p-4">
+                                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
+                                    <div className="h-6 bg-gray-200 rounded w-3/4" />
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <Card className="m-4">
+                <CardContent className="p-8 text-center">
+                    <p className="text-red-500">Error loading analytics data</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    if (!analytics) {
+        return null;
+    }
 
     return (
         <div className="p-4 space-y-6">
@@ -108,7 +104,7 @@ export function GlobalDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600">Total Guests</p>
-                                <p className="text-2xl font-bold">{totalGuests.toLocaleString()}</p>
+                                <p className="text-2xl font-bold">{analytics.totalGuests.toLocaleString()}</p>
                                 <p className="text-xs text-green-600 flex items-center">
                                     <TrendingUp className="w-3 h-3 mr-1" />
                                     +12% this month
@@ -124,7 +120,7 @@ export function GlobalDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600">Conversion Rate</p>
-                                <p className="text-2xl font-bold">{conversionRate}%</p>
+                                <p className="text-2xl font-bold">{analytics.conversionRate}%</p>
                                 <p className="text-xs text-green-600 flex items-center">
                                     <TrendingUp className="w-3 h-3 mr-1" />
                                     +3% this month
@@ -140,7 +136,7 @@ export function GlobalDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600">Avg. Conversion Time</p>
-                                <p className="text-2xl font-bold">{avgTimeToConversion}d</p>
+                                <p className="text-2xl font-bold">{analytics.avgTimeToConversion}d</p>
                                 <p className="text-xs text-red-600 flex items-center">
                                     <TrendingDown className="w-3 h-3 mr-1" />
                                     -5d this month
@@ -156,7 +152,7 @@ export function GlobalDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-gray-600">Active Workers</p>
-                                <p className="text-2xl font-bold">{activeWorkers}</p>
+                                <p className="text-2xl font-bold">{analytics.activeWorkers}</p>
                                 <p className="text-xs text-green-600 flex items-center">
                                     <TrendingUp className="w-3 h-3 mr-1" />
                                     +2 this month
@@ -187,7 +183,7 @@ export function GlobalDashboard() {
                                 <ResponsiveContainer width="100%" height={300}>
                                     <PieChart>
                                         <Pie
-                                            data={stageDistribution}
+                                            data={analytics.stageDistribution}
                                             cx="50%"
                                             cy="50%"
                                             outerRadius={80}
@@ -195,7 +191,7 @@ export function GlobalDashboard() {
                                             dataKey="value"
                                             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                                         >
-                                            {stageDistribution.map((entry, index) => (
+                                            {analytics.stageDistribution.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -212,7 +208,7 @@ export function GlobalDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
-                                    {topPerformers.map((performer, index) => (
+                                    {analytics.topPerformers.map((performer, index) => (
                                         <div
                                             key={performer.name}
                                             className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -229,17 +225,17 @@ export function GlobalDashboard() {
                                             <div className="text-right">
                                                 <p className="font-medium">{performer.conversions} conversions</p>
                                                 <div className="flex items-center space-x-1">
-                                                    {performer.trend === 'up' ? (
+                                                    {performer.trend === TrendDirection.UP ? (
                                                         <TrendingUp className="w-3 h-3 text-green-500" />
-                                                    ) : performer.trend === 'down' ? (
+                                                    ) : performer.trend === TrendDirection.DOWN ? (
                                                         <TrendingDown className="w-3 h-3 text-red-500" />
                                                     ) : (
                                                         <div className="w-3 h-3 bg-gray-400 rounded-full" />
                                                     )}
                                                     <span className="text-xs text-gray-500">
-                                                        {performer.trend === 'up'
+                                                        {performer.trend === TrendDirection.UP
                                                             ? 'Rising'
-                                                            : performer.trend === 'down'
+                                                            : performer.trend === TrendDirection.DOWN
                                                               ? 'Declining'
                                                               : 'Stable'}
                                                     </span>
@@ -260,7 +256,7 @@ export function GlobalDashboard() {
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={zonePerformanceData}>
+                                <BarChart data={analytics.zonePerformance}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="zone" />
                                     <YAxis />
@@ -282,7 +278,7 @@ export function GlobalDashboard() {
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={400}>
-                                <LineChart data={monthlyTrendsData}>
+                                <LineChart data={analytics.monthlyTrends}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="month" />
                                     <YAxis />
@@ -316,7 +312,7 @@ export function GlobalDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {dropOffAnalysis.map((item, index) => (
+                                    {analytics.dropOffAnalysis.map((item, index) => (
                                         <div key={index} className="p-4 border rounded-lg">
                                             <div className="flex items-center justify-between mb-2">
                                                 <h4 className="font-medium">{item.stage}</h4>

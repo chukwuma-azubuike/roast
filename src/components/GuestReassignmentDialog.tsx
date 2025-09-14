@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Card, CardContent } from './ui/card';
 import { toast } from 'sonner';
 import { User, Role, Guest } from '../store/types';
+import { useGetUsersQuery, useGetZonesQuery } from '../store/api';
 
 interface GuestReassignmentDialogProps {
     guest: Guest;
@@ -17,117 +18,44 @@ interface GuestReassignmentDialogProps {
     children: React.ReactNode;
 }
 
-// Mock data for workers and zones
-const mockAllWorkers = [
-    {
-        id: 'worker1',
-        name: 'John Worker',
-        zone: 'zone1',
-        zoneName: 'Central Zone',
-        email: 'john@church.org',
-        guestCount: 12,
-    },
-    {
-        id: 'worker2',
-        name: 'Mary Helper',
-        zone: 'zone1',
-        zoneName: 'Central Zone',
-        email: 'mary@church.org',
-        guestCount: 8,
-    },
-    {
-        id: 'worker3',
-        name: 'Paul Evangelist',
-        zone: 'zone2',
-        zoneName: 'North Zone',
-        email: 'paul@church.org',
-        guestCount: 15,
-    },
-    {
-        id: 'worker4',
-        name: 'Sarah Minister',
-        zone: 'zone2',
-        zoneName: 'North Zone',
-        email: 'sarah@church.org',
-        guestCount: 6,
-    },
-    {
-        id: 'worker5',
-        name: 'David Pastor',
-        zone: 'zone3',
-        zoneName: 'South Zone',
-        email: 'david@church.org',
-        guestCount: 10,
-    },
-    {
-        id: 'worker6',
-        name: 'Lisa Zhang',
-        zone: 'zone3',
-        zoneName: 'South Zone',
-        email: 'lisa@church.org',
-        guestCount: 14,
-    },
-    {
-        id: 'worker7',
-        name: 'Michael Brown',
-        zone: 'zone4',
-        zoneName: 'East Zone',
-        email: 'michael@church.org',
-        guestCount: 9,
-    },
-    {
-        id: 'worker8',
-        name: 'Jennifer Lee',
-        zone: 'zone5',
-        zoneName: 'West Zone',
-        email: 'jen@church.org',
-        guestCount: 7,
-    },
-];
-
-const mockZones = [
-    { id: 'zone1', name: 'Central Zone' },
-    { id: 'zone2', name: 'North Zone' },
-    { id: 'zone3', name: 'South Zone' },
-    { id: 'zone4', name: 'East Zone' },
-    { id: 'zone5', name: 'West Zone' },
-];
-
 export function GuestReassignmentDialog({ guest, currentUser, onReassign, children }: GuestReassignmentDialogProps) {
     const [open, setOpen] = useState(false);
     const [selectedZone, setSelectedZone] = useState<string>(guest.zoneId);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedWorker, setSelectedWorker] = useState<string>('');
 
+    const { data: zones } = useGetZonesQuery();
+    const { data: users } = useGetUsersQuery({ zoneId: selectedZone });
+
     // Filter workers based on user role and permissions
     const getAvailableWorkers = () => {
-        let workers = mockAllWorkers;
+        let workers = users;
 
         // Coordinators can only reassign within their zone
         if (currentUser.role === Role.ZONAL_COORDINATOR) {
-            workers = workers.filter(worker => worker.zone === currentUser.zoneIds?.[0]);
+            workers = workers?.filter(worker => worker.zoneIds?.includes(selectedZone));
         }
         // Admins and pastors can reassign to any zone
         else if (currentUser.role === Role.ADMIN || currentUser.role === Role.PASTOR) {
             if (selectedZone) {
-                workers = workers.filter(worker => worker.zone === selectedZone);
+                workers = workers?.filter(worker => worker.zoneIds?.includes(selectedZone));
             }
         }
 
         // Filter by search term
         if (searchTerm) {
-            workers = workers.filter(
+            workers = workers?.filter(
                 worker =>
                     worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    worker.email.toLowerCase().includes(searchTerm.toLowerCase())
+                    worker.email?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
-        return workers.filter(worker => worker.id !== guest.assignedToId);
+        return workers?.filter(worker => worker._id !== guest.assignedToId);
     };
 
     const availableWorkers = getAvailableWorkers();
-    const currentAssignedWorker = mockAllWorkers.find(w => w.id === guest.assignedToId);
+    const currentAssignedWorker = users?.find(w => w._id === guest.assignedToId);
 
     const handleReassign = () => {
         if (!selectedWorker) {
@@ -135,15 +63,13 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
             return;
         }
 
-        const newWorker = mockAllWorkers.find(w => w.id === selectedWorker);
+        const newWorker = users?.find(w => w._id === selectedWorker);
         const newZone = selectedZone !== guest.zoneId ? selectedZone : undefined;
 
         onReassign(guest._id, selectedWorker, newZone);
 
         toast.success(
-            `Guest reassigned to ${newWorker?.name}${
-                newZone ? ` in ${mockZones.find(z => z.id === newZone)?.name}` : ''
-            }`
+            `Guest reassigned to ${newWorker?.name}${newZone ? ` in ${zones?.find(z => z._id === newZone)?.name}` : ''}`
         );
 
         setOpen(false);
@@ -187,7 +113,7 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
                                         <h3 className="font-medium">{guest.name}</h3>
                                         <p className="text-sm text-gray-500">
                                             Currently assigned to {currentAssignedWorker?.name || 'Unassigned'}
-                                            {currentAssignedWorker && ` in ${currentAssignedWorker.zoneName}`}
+                                            {currentAssignedWorker && ` in ${currentAssignedWorker?.zoneIds?.[0]}`}
                                         </p>
                                     </div>
                                 </div>
@@ -204,8 +130,8 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
                                     <SelectValue placeholder="Select zone" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {mockZones.map(zone => (
-                                        <SelectItem key={zone.id} value={zone.id}>
+                                    {zones?.map(zone => (
+                                        <SelectItem key={zone._id} value={zone._id}>
                                             {zone.name}
                                         </SelectItem>
                                     ))}
@@ -232,22 +158,22 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
                     <div>
                         <Label className="text-sm font-medium">Available Workers</Label>
                         <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
-                            {availableWorkers.length === 0 ? (
+                            {users?.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
                                     <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
                                     <p>No available workers found</p>
                                     <p className="text-sm">Try adjusting your search or zone selection</p>
                                 </div>
                             ) : (
-                                availableWorkers.map(worker => (
+                                users?.map(worker => (
                                     <Card
-                                        key={worker.id}
+                                        key={worker._id}
                                         className={`cursor-pointer transition-colors ${
-                                            selectedWorker === worker.id
+                                            selectedWorker === worker._id
                                                 ? 'ring-2 ring-blue-500 bg-blue-50'
                                                 : 'hover:bg-gray-50'
                                         }`}
-                                        onClick={() => setSelectedWorker(worker.id)}
+                                        onClick={() => setSelectedWorker(worker._id)}
                                     >
                                         <CardContent className="p-3">
                                             <div className="flex items-center justify-between">
@@ -269,15 +195,15 @@ export function GuestReassignmentDialog({ guest, currentUser, onReassign, childr
                                                 <div className="text-right">
                                                     <div
                                                         className={`text-sm font-medium ${getWorkloadColor(
-                                                            worker.guestCount
+                                                            worker.guestCount ?? 0
                                                         )}`}
                                                     >
                                                         {worker.guestCount} guests
                                                     </div>
                                                     <div className="text-xs text-gray-500">
-                                                        {worker.guestCount <= 5
+                                                        {(worker.guestCount ?? 0) <= 5
                                                             ? 'Light'
-                                                            : worker.guestCount <= 10
+                                                            : (worker.guestCount ?? 0) <= 10
                                                             ? 'Moderate'
                                                             : 'Heavy'}{' '}
                                                         workload

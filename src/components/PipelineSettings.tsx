@@ -166,6 +166,7 @@ const mockPipelineStages: PipelineStage[] = [
     },
 ];
 
+// Mock data for notification rules
 const mockNotificationRules: NotificationRule[] = [
     {
         id: 'n1',
