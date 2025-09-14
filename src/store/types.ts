@@ -264,3 +264,36 @@ export interface GlobalAnalytics {
     dropOffAnalysis: DropOffAnalysis[];
     topPerformers: TopPerformer[];
 }
+
+// Pipeline and Notification Types
+export interface PipelineMilestone {
+    id: string;
+    title: string;
+    description: string;
+    required: boolean;
+    order: number;
+}
+
+export interface PipelineStage {
+    id: string;
+    name: string;
+    description: string;
+    order: number;
+    color: string;
+    isDefault: boolean;
+    milestones: PipelineMilestone[];
+}
+
+export interface NotificationRule {
+    id: string;
+    name: string;
+    description: string;
+    triggerEvent: 'stagnant_guest' | 'milestone_completed' | 'stage_transition' | 'new_assignment';
+    conditions: {
+        daysSinceContact?: number;
+        stage?: string;
+        priority?: 'low' | 'medium' | 'high';
+    };
+    recipients: ('worker' | 'coordinator' | 'admin')[];
+    isActive: boolean;
+}

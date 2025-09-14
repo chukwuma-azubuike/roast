@@ -18,6 +18,8 @@ import {
     ZoneLeaderboardEntry,
     Achievement,
     AchievementRarity,
+    PipelineStage,
+    NotificationRule,
 } from './types';
 import { v4 as uuid } from 'uuid';
 
@@ -206,6 +208,320 @@ const mockNotifications: NotificationProps[] = [
     },
 ];
 
+const mockLeaderBoard: WorkerLeaderboardEntry[] = [
+    {
+        id: 'worker1',
+        name: 'John Worker',
+        zone: 'Central',
+        avatar: 'JW',
+        stats: {
+            guestsCaptured: 28,
+            conversions: 8,
+            callsMade: 156,
+            visitsMade: 24,
+            milestoneCompletions: 45,
+            consistency: 95,
+        },
+        badges: ['Top Evangelist', 'Consistent Caller', 'Conversion King'],
+        trend: TrendDirection.UP,
+        points: 2850,
+    },
+    {
+        id: 'worker2',
+        name: 'Mary Helper',
+        zone: 'South',
+        avatar: 'MH',
+        stats: {
+            guestsCaptured: 25,
+            conversions: 7,
+            callsMade: 142,
+            visitsMade: 31,
+            milestoneCompletions: 42,
+            consistency: 88,
+        },
+        badges: ['Visit Champion', 'Faithful Follower'],
+        trend: TrendDirection.UP,
+        points: 2720,
+    },
+    {
+        id: 'worker3',
+        name: 'Paul Evangelist',
+        zone: 'North',
+        avatar: 'PE',
+        stats: {
+            guestsCaptured: 32,
+            conversions: 6,
+            callsMade: 134,
+            visitsMade: 19,
+            milestoneCompletions: 38,
+            consistency: 92,
+        },
+        badges: ['Guest Magnet', 'Street Warrior'],
+        trend: TrendDirection.STABLE,
+        points: 2680,
+    },
+    {
+        id: 'worker4',
+        name: 'Sarah Minister',
+        zone: 'East',
+        avatar: 'SM',
+        stats: {
+            guestsCaptured: 22,
+            conversions: 5,
+            callsMade: 118,
+            visitsMade: 16,
+            milestoneCompletions: 35,
+            consistency: 85,
+        },
+        badges: ['Rising Star'],
+        trend: TrendDirection.UP,
+        points: 2420,
+    },
+    {
+        id: 'worker5',
+        name: 'David Pastor',
+        zone: 'West',
+        avatar: 'DP',
+        stats: {
+            guestsCaptured: 19,
+            conversions: 5,
+            callsMade: 95,
+            visitsMade: 22,
+            milestoneCompletions: 32,
+            consistency: 78,
+        },
+        badges: ['Steady Eddie'],
+        trend: TrendDirection.DOWN,
+        points: 2180,
+    },
+];
+
+const mockCurrentUserAchievements: Achievement[] = [
+    {
+        id: 'first_guest',
+        title: 'First Guest',
+        description: 'Capture your first guest',
+        rarity: AchievementRarity.COMMON,
+        points: 100,
+    },
+    {
+        id: 'conversion_master',
+        title: 'Conversion Master',
+        description: 'Convert 10 guests to workforce',
+        rarity: AchievementRarity.LEGENDARY,
+        points: 1000,
+    },
+    {
+        id: 'consistent_caller',
+        title: 'Consistent Caller',
+        description: 'Make calls for 30 days straight',
+        rarity: AchievementRarity.RARE,
+        points: 500,
+    },
+    {
+        id: 'visit_champion',
+        title: 'Visit Champion',
+        description: 'Complete 50 home visits',
+        rarity: AchievementRarity.EPIC,
+        points: 750,
+    },
+];
+
+const mockZoneLeaderboard: ZoneLeaderboardEntry[] = [
+    {
+        zone: 'South Zone',
+        coordinator: 'Pastor Mike',
+        stats: {
+            totalGuests: 89,
+            conversions: 24,
+            conversionRate: 27,
+            activeWorkers: 6,
+            avgResponseTime: '2.3 hours',
+        },
+        points: 8950,
+        trend: TrendDirection.UP,
+    },
+    {
+        zone: 'Central Zone',
+        coordinator: 'Elder Sarah',
+        stats: {
+            totalGuests: 76,
+            conversions: 19,
+            conversionRate: 25,
+            activeWorkers: 5,
+            avgResponseTime: '1.8 hours',
+        },
+        points: 8200,
+        trend: TrendDirection.UP,
+    },
+    {
+        zone: 'North Zone',
+        coordinator: 'Deacon John',
+        stats: {
+            totalGuests: 68,
+            conversions: 16,
+            conversionRate: 24,
+            activeWorkers: 4,
+            avgResponseTime: '3.1 hours',
+        },
+        points: 7680,
+        trend: TrendDirection.STABLE,
+    },
+    {
+        zone: 'East Zone',
+        coordinator: 'Minister Lisa',
+        stats: {
+            totalGuests: 62,
+            conversions: 14,
+            conversionRate: 23,
+            activeWorkers: 4,
+            avgResponseTime: '2.7 hours',
+        },
+        points: 7020,
+        trend: TrendDirection.DOWN,
+    },
+    {
+        zone: 'West Zone',
+        coordinator: 'Pastor David',
+        stats: {
+            totalGuests: 55,
+            conversions: 12,
+            conversionRate: 22,
+            activeWorkers: 3,
+            avgResponseTime: '4.2 hours',
+        },
+        points: 6240,
+        trend: TrendDirection.DOWN,
+    },
+];
+
+const mockPipelineStages: PipelineStage[] = [
+    {
+        id: 'invited',
+        name: 'Invited',
+        description: 'Guest has been invited to church but has not yet attended',
+        order: 1,
+        color: '#3B82F6',
+        isDefault: true,
+        milestones: [
+            {
+                id: 'm1',
+                title: 'Initial Contact',
+                description: 'First interaction with guest',
+                required: true,
+                order: 1,
+            },
+            {
+                id: 'm2',
+                title: 'Phone Call',
+                description: 'Follow-up phone call made',
+                required: true,
+                order: 2,
+            },
+            {
+                id: 'm3',
+                title: 'Service Invitation',
+                description: 'Guest invited to attend service',
+                required: true,
+                order: 3,
+            },
+        ],
+    },
+    {
+        id: 'attended',
+        name: 'Attended',
+        description: 'Guest has attended at least one church service',
+        order: 2,
+        color: '#10B981',
+        isDefault: true,
+        milestones: [
+            {
+                id: 'm4',
+                title: 'First Visit',
+                description: 'Guest attended their first service',
+                required: true,
+                order: 1,
+            },
+            {
+                id: 'm5',
+                title: 'Welcome Meeting',
+                description: 'Met with welcome team',
+                required: false,
+                order: 2,
+            },
+            {
+                id: 'm6',
+                title: 'Small Group Invitation',
+                description: 'Invited to join small group',
+                required: true,
+                order: 3,
+            },
+        ],
+    },
+    {
+        id: 'discipled',
+        name: 'Discipled',
+        description: 'Guest is actively participating in discipleship activities',
+        order: 3,
+        color: '#8B5CF6',
+        isDefault: true,
+        milestones: [
+            {
+                id: 'm7',
+                title: 'Small Group Attendance',
+                description: 'Regularly attending small group',
+                required: true,
+                order: 1,
+            },
+            {
+                id: 'm8',
+                title: 'Bible Study Started',
+                description: 'Enrolled in Bible study program',
+                required: true,
+                order: 2,
+            },
+            {
+                id: 'm9',
+                title: 'Baptism Preparation',
+                description: 'Preparing for baptism',
+                required: false,
+                order: 3,
+            },
+        ],
+    },
+    {
+        id: 'joined',
+        name: 'Joined Workforce',
+        description: 'Guest has become an active member and joined ministry',
+        order: 4,
+        color: '#6B7280',
+        isDefault: true,
+        milestones: [
+            {
+                id: 'm10',
+                title: 'Baptism Completed',
+                description: 'Guest has been baptized',
+                required: false,
+                order: 1,
+            },
+            {
+                id: 'm11',
+                title: 'Ministry Assignment',
+                description: 'Assigned to a ministry team',
+                required: true,
+                order: 2,
+            },
+            {
+                id: 'm12',
+                title: 'Leadership Training',
+                description: 'Completed leadership training',
+                required: false,
+                order: 3,
+            },
+        ],
+    },
+];
+
 export const crmApi = createApi({
     reducerPath: 'crmApi',
 
@@ -227,6 +543,7 @@ export const crmApi = createApi({
         'CurrentUser',
         'Analytics',
         'Leaderboard',
+        'Pipeline',
     ],
 
     refetchOnReconnect: true,
@@ -403,10 +720,10 @@ export const crmApi = createApi({
             transformResponse() {
                 return mockNotifications;
             },
-            // providesTags: result =>
-            //     result
-            //         ? [...result.map(({ _id }) => ({ type: 'Notification' as const, _id }))]
-            //         : [{ type: 'Notification', _id: 'LIST' }],
+            providesTags: result =>
+                result
+                    ? [...result.map(({ _id }) => ({ type: 'Notification' as const, _id }))]
+                    : [{ type: 'Notification', _id: 'LIST' }],
         }),
 
         markNotificationAsRead: builder.mutation<NotificationProps, string>({
@@ -443,93 +760,7 @@ export const crmApi = createApi({
                 params: { period },
             }),
             transformResponse() {
-                return [
-                    {
-                        id: 'worker1',
-                        name: 'John Worker',
-                        zone: 'Central',
-                        avatar: 'JW',
-                        stats: {
-                            guestsCaptured: 28,
-                            conversions: 8,
-                            callsMade: 156,
-                            visitsMade: 24,
-                            milestoneCompletions: 45,
-                            consistency: 95,
-                        },
-                        badges: ['Top Evangelist', 'Consistent Caller', 'Conversion King'],
-                        trend: TrendDirection.UP,
-                        points: 2850,
-                    },
-                    {
-                        id: 'worker2',
-                        name: 'Mary Helper',
-                        zone: 'South',
-                        avatar: 'MH',
-                        stats: {
-                            guestsCaptured: 25,
-                            conversions: 7,
-                            callsMade: 142,
-                            visitsMade: 31,
-                            milestoneCompletions: 42,
-                            consistency: 88,
-                        },
-                        badges: ['Visit Champion', 'Faithful Follower'],
-                        trend: TrendDirection.UP,
-                        points: 2720,
-                    },
-                    {
-                        id: 'worker3',
-                        name: 'Paul Evangelist',
-                        zone: 'North',
-                        avatar: 'PE',
-                        stats: {
-                            guestsCaptured: 32,
-                            conversions: 6,
-                            callsMade: 134,
-                            visitsMade: 19,
-                            milestoneCompletions: 38,
-                            consistency: 92,
-                        },
-                        badges: ['Guest Magnet', 'Street Warrior'],
-                        trend: TrendDirection.STABLE,
-                        points: 2680,
-                    },
-                    {
-                        id: 'worker4',
-                        name: 'Sarah Minister',
-                        zone: 'East',
-                        avatar: 'SM',
-                        stats: {
-                            guestsCaptured: 22,
-                            conversions: 5,
-                            callsMade: 118,
-                            visitsMade: 16,
-                            milestoneCompletions: 35,
-                            consistency: 85,
-                        },
-                        badges: ['Rising Star'],
-                        trend: TrendDirection.UP,
-                        points: 2420,
-                    },
-                    {
-                        id: 'worker5',
-                        name: 'David Pastor',
-                        zone: 'West',
-                        avatar: 'DP',
-                        stats: {
-                            guestsCaptured: 19,
-                            conversions: 5,
-                            callsMade: 95,
-                            visitsMade: 22,
-                            milestoneCompletions: 32,
-                            consistency: 78,
-                        },
-                        badges: ['Steady Eddie'],
-                        trend: TrendDirection.DOWN,
-                        points: 2180,
-                    },
-                ];
+                return mockLeaderBoard;
             },
             providesTags: ['Leaderboard'],
         }),
@@ -541,73 +772,7 @@ export const crmApi = createApi({
                 params: { period },
             }),
             transformResponse() {
-                return [
-                    {
-                        zone: 'South Zone',
-                        coordinator: 'Pastor Mike',
-                        stats: {
-                            totalGuests: 89,
-                            conversions: 24,
-                            conversionRate: 27,
-                            activeWorkers: 6,
-                            avgResponseTime: '2.3 hours',
-                        },
-                        points: 8950,
-                        trend: TrendDirection.UP,
-                    },
-                    {
-                        zone: 'Central Zone',
-                        coordinator: 'Elder Sarah',
-                        stats: {
-                            totalGuests: 76,
-                            conversions: 19,
-                            conversionRate: 25,
-                            activeWorkers: 5,
-                            avgResponseTime: '1.8 hours',
-                        },
-                        points: 8200,
-                        trend: TrendDirection.UP,
-                    },
-                    {
-                        zone: 'North Zone',
-                        coordinator: 'Deacon John',
-                        stats: {
-                            totalGuests: 68,
-                            conversions: 16,
-                            conversionRate: 24,
-                            activeWorkers: 4,
-                            avgResponseTime: '3.1 hours',
-                        },
-                        points: 7680,
-                        trend: TrendDirection.STABLE,
-                    },
-                    {
-                        zone: 'East Zone',
-                        coordinator: 'Minister Lisa',
-                        stats: {
-                            totalGuests: 62,
-                            conversions: 14,
-                            conversionRate: 23,
-                            activeWorkers: 4,
-                            avgResponseTime: '2.7 hours',
-                        },
-                        points: 7020,
-                        trend: TrendDirection.DOWN,
-                    },
-                    {
-                        zone: 'West Zone',
-                        coordinator: 'Pastor David',
-                        stats: {
-                            totalGuests: 55,
-                            conversions: 12,
-                            conversionRate: 22,
-                            activeWorkers: 3,
-                            avgResponseTime: '4.2 hours',
-                        },
-                        points: 6240,
-                        trend: TrendDirection.DOWN,
-                    },
-                ];
+                return mockZoneLeaderboard;
             },
             providesTags: ['Leaderboard'],
         }),
@@ -618,38 +783,95 @@ export const crmApi = createApi({
                 // url: '/achievements',
             }),
             transformResponse() {
+                return mockCurrentUserAchievements;
+            },
+            providesTags: ['Leaderboard'],
+        }),
+
+        // Pipeline Settings Queries
+        getPipelineStages: builder.query<PipelineStage[], void>({
+            query: () => ({
+                url: '/',
+                // url: '/pipeline/stages',
+            }),
+            transformResponse() {
+                return mockPipelineStages;
+            },
+            providesTags: ['Pipeline'],
+        }),
+
+        getNotificationRules: builder.query<NotificationRule[], void>({
+            query: () => ({
+                url: '/',
+                // url: '/pipeline/notification-rules',
+            }),
+            transformResponse() {
                 return [
                     {
-                        id: 'first_guest',
-                        title: 'First Guest',
-                        description: 'Capture your first guest',
-                        rarity: AchievementRarity.COMMON,
-                        points: 100,
+                        id: 'n1',
+                        name: 'Stagnant Guest Alert',
+                        description: "Alert coordinator when a guest hasn't been contacted in 7 days",
+                        triggerEvent: 'stagnant_guest',
+                        conditions: { daysSinceContact: 7 },
+                        recipients: ['coordinator'],
+                        isActive: true,
                     },
                     {
-                        id: 'conversion_master',
-                        title: 'Conversion Master',
-                        description: 'Convert 10 guests to workforce',
-                        rarity: AchievementRarity.LEGENDARY,
-                        points: 1000,
+                        id: 'n2',
+                        name: 'Milestone Celebration',
+                        description: 'Notify team when important milestones are completed',
+                        triggerEvent: 'milestone_completed',
+                        conditions: { priority: 'high' },
+                        recipients: ['worker', 'coordinator'],
+                        isActive: true,
                     },
                     {
-                        id: 'consistent_caller',
-                        title: 'Consistent Caller',
-                        description: 'Make calls for 30 days straight',
-                        rarity: AchievementRarity.RARE,
-                        points: 500,
-                    },
-                    {
-                        id: 'visit_champion',
-                        title: 'Visit Champion',
-                        description: 'Complete 50 home visits',
-                        rarity: AchievementRarity.EPIC,
-                        points: 750,
+                        id: 'n3',
+                        name: 'Stage Transition Alert',
+                        description: 'Alert admin when guests move to final stage',
+                        triggerEvent: 'stage_transition',
+                        conditions: { stage: 'joined' },
+                        recipients: ['admin'],
+                        isActive: true,
                     },
                 ];
             },
-            providesTags: ['Leaderboard'],
+            providesTags: ['Pipeline'],
+        }),
+
+        updatePipelineStage: builder.mutation<PipelineStage, Partial<PipelineStage> & { id: string }>({
+            query: ({ id, ...patch }) => ({
+                url: `/pipeline/stages/${id}`,
+                method: 'PATCH',
+                body: patch,
+            }),
+            invalidatesTags: ['Pipeline'],
+        }),
+
+        createPipelineStage: builder.mutation<PipelineStage, Omit<PipelineStage, 'id'>>({
+            query: stage => ({
+                url: '/pipeline/stages',
+                method: 'POST',
+                body: stage,
+            }),
+            invalidatesTags: ['Pipeline'],
+        }),
+
+        deletePipelineStage: builder.mutation<void, string>({
+            query: id => ({
+                url: `/pipeline/stages/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Pipeline'],
+        }),
+
+        updateNotificationRule: builder.mutation<NotificationRule, Partial<NotificationRule> & { id: string }>({
+            query: ({ id, ...patch }) => ({
+                url: `/pipeline/notification-rules/${id}`,
+                method: 'PATCH',
+                body: patch,
+            }),
+            invalidatesTags: ['Pipeline'],
         }),
 
         // Analytics Queries
@@ -726,4 +948,10 @@ export const {
     useGetWorkerLeaderboardQuery,
     useGetZoneLeaderboardQuery,
     useGetAchievementsQuery,
+    useGetPipelineStagesQuery,
+    useGetNotificationRulesQuery,
+    useUpdatePipelineStageMutation,
+    useCreatePipelineStageMutation,
+    useDeletePipelineStageMutation,
+    useUpdateNotificationRuleMutation,
 } = crmApi;

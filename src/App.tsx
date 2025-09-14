@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Plus, BarChart3, Trophy, Bell, UserIcon, Settings } from 'lucide-react';
+import { Users, Plus, BarChart3, Trophy, Bell, Settings } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
@@ -12,13 +12,12 @@ import { ZoneDashboard } from './components/ZoneDashboard';
 import { GlobalDashboard } from './components/GlobalDashboard';
 import { Leaderboards } from './components/Leaderboards';
 import { NotificationCenter } from './components/NotificationCenter';
-import { PipelineSettings } from './components/PipelineSettings';
 
 import { User, Role, ViewType, View } from './store/types';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
+import PipelineSettings from './components/PipelineSettings';
 
-// Mock current user - in real app this would come from auth
 const mockCurrentUser: User = {
     _id: 'user1',
     name: 'John Worker',
@@ -27,8 +26,6 @@ const mockCurrentUser: User = {
     email: 'john@church.org',
     isActive: true,
 };
-
-// ViewType moved to store/types.ts
 
 export default function App() {
     const [currentView, setCurrentView] = useState<ViewType>(View.MY_GUESTS);
@@ -119,7 +116,7 @@ export default function App() {
             case View.NOTIFICATIONS:
                 return <NotificationCenter currentUser={currentUser} />;
             case View.PIPELINE_SETTINGS:
-                return <PipelineSettings currentUser={currentUser} />;
+                return <PipelineSettings />;
             default:
                 return <MyGuestsDashboard currentUser={currentUser} onViewGuest={handleViewGuest} />;
         }
