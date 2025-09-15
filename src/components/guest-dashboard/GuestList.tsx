@@ -74,17 +74,17 @@ export const GuestList = memo(function GuestList({ guests, onStageChange, onView
                             const progress = getProgressPercentage(guest.milestones);
 
                             return (
-                                <TableRow key={guest.id}>
+                                <TableRow key={guest._id}>
                                     <TableCell>
                                         <div className="flex items-center space-x-3">
                                             <Avatar className="w-8 h-8">
                                                 <AvatarFallback className="text-xs">
-                                                    {guest.firstName[0]}
-                                                    {guest.lastName?.[0] || ''}
+                                                    {guest.name.split(' ')[0]}
+                                                    {guest.name.split(' ')[1]}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <div className="font-medium">{`${guest.firstName} ${guest.lastName || ''}`}</div>
+                                                <div className="font-medium">{`${guest.name || ''}`}</div>
                                                 {guest.address && (
                                                     <div className="text-xs text-gray-500">{guest.address}</div>
                                                 )}
@@ -123,7 +123,7 @@ export const GuestList = memo(function GuestList({ guests, onStageChange, onView
                                         <Select
                                             value={guest.assimilationStage}
                                             onValueChange={newStage =>
-                                                onStageChange(guest.id, newStage as AssimilationStage)
+                                                onStageChange(guest._id, newStage as AssimilationStage)
                                             }
                                         >
                                             <SelectTrigger className="w-32">
@@ -194,7 +194,7 @@ export const GuestList = memo(function GuestList({ guests, onStageChange, onView
                                                 </button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => onViewGuest(guest.id)}>
+                                                <DropdownMenuItem onClick={() => onViewGuest(guest._id)}>
                                                     View Profile
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>

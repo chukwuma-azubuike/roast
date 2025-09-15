@@ -34,19 +34,19 @@ export const GuestCard = memo(function GuestCard({ guest, onViewGuest, onDragSta
         <Card
             className={`cursor-move hover:shadow-md transition-shadow bg-white ${className || ''}`}
             draggable={!!onDragStart}
-            onDragStart={e => onDragStart?.(e, guest.id)}
+            onDragStart={e => onDragStart?.(e, guest._id)}
         >
             <CardContent className="p-3">
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center space-x-2">
                         <Avatar className="w-8 h-8">
                             <AvatarFallback className="text-xs">
-                                {guest.firstName[0]}
-                                {guest.lastName?.[0] || ''}
+                                {guest.name.split(' ')[0]}
+                                {guest.name.split(' ')[1]}
                             </AvatarFallback>
                         </Avatar>
                         <div>
-                            <h4 className="font-medium text-sm">{`${guest.firstName} ${guest.lastName || ''}`}</h4>
+                            <h4 className="font-medium text-sm">{`${guest.name || ''}`}</h4>
                             <p className="text-xs text-gray-500">{guest.phone}</p>
                         </div>
                     </div>
@@ -58,7 +58,7 @@ export const GuestCard = memo(function GuestCard({ guest, onViewGuest, onDragSta
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onViewGuest(guest.id)}>View Profile</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onViewGuest(guest._id)}>View Profile</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

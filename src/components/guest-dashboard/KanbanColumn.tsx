@@ -81,7 +81,7 @@ export const KanbanColumn = memo(function KanbanColumn({
 
             <div className="space-y-3">
                 {guests.map(guest => (
-                    <GuestCard key={guest.id} guest={guest} onViewGuest={onViewGuest} onDragStart={handleDragStart} />
+                    <GuestCard key={guest._id} guest={guest} onViewGuest={onViewGuest} onDragStart={handleDragStart} />
                 ))}
 
                 {guests.length === 0 && (

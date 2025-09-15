@@ -29,7 +29,7 @@ export function MyGuestsDashboard({ currentUserId, onViewGuest }: MyGuestsDashbo
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(
                 guest =>
-                    `${guest.firstName} ${guest.lastName || ''}`.toLowerCase().includes(term) ||
+                    `${guest.name}`.toLowerCase().includes(term) ||
                     guest.phone.includes(term) ||
                     (guest.address && guest.address.toLowerCase().includes(term))
             );
@@ -69,7 +69,7 @@ export function MyGuestsDashboard({ currentUserId, onViewGuest }: MyGuestsDashbo
         async (guestId: string, newStage: AssimilationStage) => {
             try {
                 await updateGuest({
-                    id: guestId,
+                    _id: guestId,
                     assimilationStage: newStage,
                     lastContact: new Date().toISOString(),
                 }).unwrap();

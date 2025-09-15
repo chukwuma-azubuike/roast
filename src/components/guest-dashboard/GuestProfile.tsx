@@ -79,7 +79,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
         if (!guest) return;
 
         const updatedMilestones = guest.milestones.map(m =>
-            m.id === milestoneId
+            m._id === milestoneId
                 ? {
                       ...m,
                       status:
@@ -91,7 +91,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
 
         try {
             await updateGuest({
-                id: guest.id,
+                _id: guest._id,
                 milestones: updatedMilestones,
                 lastContact: new Date().toISOString(),
             }).unwrap();
@@ -106,7 +106,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
 
         try {
             await addEngagement({
-                guestId: guest.id,
+                guestId: guest._id,
                 workerId: guest.assignedToId!,
                 type: ContactChannel.CALL,
                 notes: newNote,
@@ -151,12 +151,12 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                     <div className="flex items-start space-x-4 mb-4">
                         <Avatar className="w-16 h-16">
                             <AvatarFallback className="text-lg">
-                                {guest.firstName[0]}
-                                {guest.lastName?.[0] || ''}
+                                {guest.name.split(' ')[0]}
+                                {guest.name.split(' ')[1]}
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h1 className="text-2xl font-bold mb-2">{`${guest.firstName} ${guest.lastName || ''}`}</h1>
+                            <h1 className="text-2xl font-bold mb-2">{`${guest.name || ''}`}</h1>
                             <div className="flex items-center space-x-2 mb-2">
                                 <Badge variant="secondary" className={getStageColor(guest.assimilationStage)}>
                                     {guest.assimilationStage.charAt(0).toUpperCase() + guest.assimilationStage.slice(1)}
@@ -222,10 +222,10 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                 <CardContent>
                     <div className="space-y-3">
                         {guest.milestones.map((milestone, index) => (
-                            <div key={milestone.id} className="flex items-center space-x-3">
+                            <div key={milestone._id} className="flex items-center space-x-3">
                                 <Checkbox
                                     checked={milestone.status === MilestoneStatus.COMPLETED}
-                                    onCheckedChange={() => handleMilestoneToggle(milestone.id)}
+                                    onCheckedChange={() => handleMilestoneToggle(milestone._id)}
                                 />
                                 <div className="flex-1">
                                     <span
@@ -297,7 +297,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                     {/* Timeline Items */}
                     <div className="space-y-4">
                         {engagements.map((item, index) => (
-                            <div key={item.id} className="flex space-x-3">
+                            <div key={item._id} className="flex space-x-3">
                                 <div className="flex flex-col items-center">
                                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                                         {getTimelineIcon(item.type)}
