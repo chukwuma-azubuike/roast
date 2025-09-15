@@ -5,11 +5,10 @@ import { Badge } from './components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Toaster } from './components/ui/sonner';
 
-import { GuestCaptureForm } from './components/GuestCaptureForm';
-import { MyGuestsDashboard } from './components/MyGuestsDashboard';
-import { GuestProfile } from './components/GuestProfile';
-import { ZoneDashboard } from './components/ZoneDashboard';
-import { GlobalDashboard } from './components/GlobalDashboard';
+import { GuestCaptureForm, GuestProfile } from './components/guests';
+import { MyGuestsDashboard } from './components/guest-dashboard';
+import { ZoneDashboard } from './components/zone-dashboard';
+import { GlobalDashboard } from './components/dashboard';
 import { Leaderboards } from './components/Leaderboards';
 import { NotificationCenter } from './components/NotificationCenter';
 

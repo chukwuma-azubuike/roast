@@ -84,7 +84,7 @@ export function GuestProfile({ guestId, onBack }: GuestProfileProps) {
                       ...m,
                       status:
                           m.status === MilestoneStatus.COMPLETED ? MilestoneStatus.PENDING : MilestoneStatus.COMPLETED,
-                      completedAt: m.status === MilestoneStatus.COMPLETED ? null : new Date().toISOString(),
+                      completedAt: m.status === MilestoneStatus.COMPLETED ? undefined : new Date().toISOString(),
                   }
                 : m
         );

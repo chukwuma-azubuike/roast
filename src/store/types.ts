@@ -40,7 +40,7 @@ export interface User {
     role: Role;
     zoneName?: string;
     guestCount?: number;
-    zoneIds?: ID[]; // zones they coordinate
+    zoneIds: ID[]; // zones they coordinate
     isActive?: boolean;
 }
 
@@ -50,7 +50,7 @@ export interface Milestone {
     description?: string;
     weekNumber?: number;
     status: MilestoneStatus;
-    completedAt?: string | Date | null;
+    completedAt?: string | Date;
 }
 
 export interface Zone {

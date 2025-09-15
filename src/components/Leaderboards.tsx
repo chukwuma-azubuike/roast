@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { User, Role, TrendDirection, Achievement, WorkerLeaderboardEntry, ZoneLeaderboardEntry } from '../store/types';
+import { User, Role, Achievement } from '../store/types';
 import { useGetWorkerLeaderboardQuery, useGetZoneLeaderboardQuery, useGetAchievementsQuery } from '../store/api';
 
 interface LeaderboardsProps {
