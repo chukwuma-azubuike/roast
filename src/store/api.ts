@@ -48,7 +48,7 @@ const generateMockGuest = (overrides: Partial<Guest> = {}): Guest => ({
             description: 'First contact with guest',
             weekNumber: 1,
             status: MilestoneStatus.PENDING,
-            completedAt: null,
+            completedAt: now(),
         },
         {
             _id: uuid(),

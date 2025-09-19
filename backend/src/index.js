@@ -16,13 +16,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/guests', guestsRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/zones', zonesRouter);
-app.use('/api/notifications', notificationsRouter);
-app.use('/api/leaderboard', leaderboardRouter);
-app.use('/api/pipeline', pipelineRouter);
-app.use('/api/analytics', analyticsRouter);
+app.use('/api/roast-crm/guests', guestsRouter);
+app.use('/api/roast-crm/users', usersRouter);
+app.use('/api/roast-crm/zones', zonesRouter);
+app.use('/api/roast-crm/notifications', notificationsRouter);
+app.use('/api/roast-crm/leaderboard', leaderboardRouter);
+app.use('/api/roast-crm/pipeline', pipelineRouter);
+app.use('/api/roast-crm/analytics', analyticsRouter);
 
 app.get('/api/me', (req, res) => {
     res.json({

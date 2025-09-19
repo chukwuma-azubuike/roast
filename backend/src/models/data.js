@@ -8,12 +8,37 @@ export const mockGuests = [
     {
         _id: uuid(),
         name: 'Remi Lawal',
-        assignedToId: 'user-worker-1',
+        assignedToId: 'user-1',
         assimilationStage: 'INVITED',
         lastContact: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
         phone: '+2348012345678',
         zoneId: 'zone-1',
-        createdById: 'user-worker-1',
+        createdById: 'user-1',
+        createdAt: now(),
+        preferredChannel: 'WHATSAPP',
+        prayerRequest: 'Pray for new job',
+        address: 'Lagos',
+        nextAction: 'Follow up via call',
+        milestones: [
+            {
+                _id: uuid(),
+                title: 'Initial Contact',
+                description: 'First contact with guest',
+                weekNumber: 1,
+                status: 'PENDING',
+                completedAt: null,
+            }
+        ]
+    },
+        {
+        _id: uuid(),
+        name: 'Osasco Paulo',
+        assignedToId: 'user-1',
+        assimilationStage: 'INVITED',
+        lastContact: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+        phone: '+2348012345678',
+        zoneId: 'zone-1',
+        createdById: 'user-1',
         createdAt: now(),
         preferredChannel: 'WHATSAPP',
         prayerRequest: 'Pray for new job',

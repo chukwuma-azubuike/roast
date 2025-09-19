@@ -15,22 +15,25 @@ interface FormFieldProps {
     autoComplete?: string;
 }
 
-export function FormField({ 
-    id, 
-    label, 
-    icon: Icon, 
-    value, 
-    onChange, 
-    placeholder, 
+export function FormField({
+    id,
+    label,
+    icon: Icon,
+    value,
+    onChange,
+    placeholder,
     required = false,
     type = 'text',
-    autoComplete
+    autoComplete,
 }: FormFieldProps) {
     return (
         <div className="space-y-2">
             <Label htmlFor={id} className="flex items-center space-x-1">
                 <Icon className="w-4 h-4" />
-                <span>{label}{required && ' *'}</span>
+                <span>
+                    {label}
+                    {required && ' *'}
+                </span>
             </Label>
             <Input
                 id={id}

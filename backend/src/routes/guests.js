@@ -1,6 +1,7 @@
 import express from 'express';
 import Guest from '../models/Guest.js';
 import Engagement from '../models/Engagement.js';
+import { mockGuests } from '../models/data.js';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get('/', async (req, res) => {
             .populate('zoneId', 'name')
             .sort('-createdAt');
 
-        res.json(guests);
+        res.json(mockGuests ?? guests);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
